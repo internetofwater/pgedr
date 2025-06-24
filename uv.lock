@@ -663,17 +663,24 @@ dependencies = [
     { name = "pytest-cov" },
 ]
 
+[package.optional-dependencies]
+dev = [
+    { name = "pygeoapi" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "cryptography", specifier = ">=44.0.3" },
     { name = "geoalchemy2" },
     { name = "psycopg2" },
     { name = "pydantic" },
-    { name = "pygeoapi", url = "https://github.com/C-Loftus/pygeoapi/archive/refs/heads/mysql_provider.zip" },
+    { name = "pygeoapi" },
+    { name = "pygeoapi", marker = "extra == 'dev'", git = "https://github.com/geopython/pygeoapi.git?rev=master" },
     { name = "pymysql", specifier = ">=1.1.1" },
     { name = "pytest" },
     { name = "pytest-cov" },
 ]
+provides-extras = ["dev"]
 
 [[package]]
 name = "pluggy"
@@ -800,7 +807,7 @@ wheels = [
 [[package]]
 name = "pygeoapi"
 version = "0.21.dev0"
-source = { url = "https://github.com/C-Loftus/pygeoapi/archive/refs/heads/mysql_provider.zip" }
+source = { git = "https://github.com/geopython/pygeoapi.git?rev=master#c3084773bc8c3b6f722adf335128cf164b82223e" }
 dependencies = [
     { name = "babel" },
     { name = "click" },
@@ -809,29 +816,6 @@ dependencies = [
     { name = "jinja2" },
     { name = "jsonschema" },
     { name = "pydantic" },
-    { name = "pygeofilter" },
-    { name = "pygeoif" },
-    { name = "pyproj" },
-    { name = "python-dateutil" },
-    { name = "pytz" },
-    { name = "pyyaml" },
-    { name = "rasterio" },
-    { name = "requests" },
-    { name = "shapely" },
-    { name = "sqlalchemy" },
-    { name = "tinydb" },
-]
-sdist = { hash = "sha256:bed7df1e6c01d26755808084fed9b2fc6b3109d2aaea9433fe8125af4448bb23" }
-
-[package.metadata]
-requires-dist = [
-    { name = "babel" },
-    { name = "click" },
-    { name = "filelock" },
-    { name = "flask" },
-    { name = "jinja2" },
-    { name = "jsonschema" },
-    { name = "pydantic", specifier = ">2.0" },
     { name = "pygeofilter" },
     { name = "pygeoif" },
     { name = "pyproj" },
