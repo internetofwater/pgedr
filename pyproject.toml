@@ -24,7 +24,7 @@ dependencies = [
     "geoalchemy2",
     "psycopg2",
     "pydantic",
-    "pygeoapi@https://github.com/C-Loftus/pygeoapi/archive/refs/heads/mysql_provider.zip",
+    "pygeoapi",
     "pymysql>=1.1.1",
     "pytest",
     "pytest-cov"
