@@ -443,6 +443,8 @@ class PostgresEDRProvider(EDRProvider):
     A provider for querying a PostgreSQL database
     """
 
+    default_port = 5432
+
     def __init__(self, provider_def: dict):
         """
         PostgreSQLProvider Class constructor
@@ -479,6 +481,8 @@ class MySQLEDRProvider(EDRProvider):
     """
     A provider for a MySQL EDR
     """
+
+    default_port = 3306
 
     def __init__(self, provider_def: dict):
         """

@@ -50,3 +50,8 @@ Repository = "https://github.com/internetofwater/pygeoapi-sql-edr"
 
 [tool.pytest.ini_options]
 addopts = "--cov=pg_edr"
+
+[project.optional-dependencies]
+dev = [
+  "pygeoapi @ git+https://github.com/geopython/pygeoapi.git@master"
+]
