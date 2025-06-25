@@ -121,7 +121,12 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         LOGGER.debug("Get available fields/properties")
 
         if not self._fields and hasattr(self, "parameter_id"):
-            query = select(self.pic, self.pnc, self.puc).with_joins(self.joins)
+            query = (
+                select(self.pic, self.pnc, self.puc)
+                .select_from(self.model)
+                .with_joins(self.joins)
+                .distinct(self.pic)
+            )
 
             with Session(self._engine) as session:
                 for pid, pname, punit in session.execute(query):
@@ -184,6 +189,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
                 .where(bbox_filter)
                 .where(parameter_filters)
                 .where(time_filter)
+                .distinct()
             )
 
             parameters = self._get_parameters(
@@ -202,10 +208,10 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
                 select(self.lc, self.gc)
                 .select_from(self.model)
                 .with_joins(self.joins)
-                .distinct(self.lc)
                 .where(bbox_filter)
                 .where(parameter_filters)
                 .where(time_filter)
+                .distinct(self.lc)
                 .limit(limit)
             )
 
@@ -245,6 +251,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
                 .select_from(self.model)
                 .with_joins(self.joins, isouter=True)
                 .where(self.lc == location_id)
+                .distinct()
             )
 
             geom = session.execute(location_query).scalar()
@@ -269,16 +276,17 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
                     "values": shapely.geometry.mapping(geom),
                 }
 
-            properties_query = (
+            parameter_query = (
                 select(self.pic)
                 .select_from(self.model)
                 .with_joins(self.joins)
                 .where(self.lc == location_id)
                 .where(parameter_filters)
                 .where(time_filter)
+                .distinct()
             )
 
-            parameters = {p for (p,) in session.execute(properties_query)}
+            parameters = {p for (p,) in session.execute(parameter_query)}
 
             coverage["parameters"] = self._get_parameters(parameters)
             for p in parameters:
