@@ -16,24 +16,10 @@ from sqlalchemy.sql.expression import or_, and_
 from pygeoapi.provider.base_edr import BaseEDRProvider
 from pygeoapi.provider.sql import GenericSQLProvider
 
-from pg_edr.lib import get_base_schema
+from pg_edr.lib import get_base_schema, empty_coverage
 from pg_edr.lib import get_column_from_qualified_name as gqname
 
 LOGGER = logging.getLogger(__name__)
-
-
-GEOGRAPHIC_CRS = {
-    "coordinates": ["x", "y"],
-    "system": {
-        "type": "GeographicCRS",
-        "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
-    },
-}
-
-TEMPORAL_RS = {
-    "coordinates": ["t"],
-    "system": {"type": "TemporalRS", "calendar": "Gregorian"},
-}
 
 
 class EDRProvider(BaseEDRProvider, GenericSQLProvider):
@@ -221,17 +207,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         limit: int = 100,
         **kwargs,
     ):
-        coverage = {
-            "type": "Coverage",
-            "domain": {
-                "type": "Domain",
-                "domainType": "",
-                "axes": {"t": {"values": []}},
-                "referencing": [GEOGRAPHIC_CRS, TEMPORAL_RS],
-            },
-            "parameters": [],
-            "ranges": {},
-        }
+        coverage = empty_coverage()
 
         parameter_filters = self._get_parameter_filters(select_properties)
         time_filter = self._get_datetime_filter(datetime_)
