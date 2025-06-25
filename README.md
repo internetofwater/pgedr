@@ -17,7 +17,7 @@ The configuration for Postgres EDR is as follows:
 
 ```yaml
 - type: edr
-  name: pg_edr.PostgresEDRProvider
+  name: pg_edr.edr.PostgresEDRProvider
   data: # Same as PostgresSQLProvider
     host: ${POSTGRES_HOST}
     dbname: ${POSTGRES_DB}
