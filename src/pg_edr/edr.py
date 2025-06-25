@@ -180,17 +180,12 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         bbox_filter = self._get_bbox_filter(bbox)
         time_filter = self._get_datetime_filter(datetime_)
         parameter_filters = self._get_parameter_filters(select_properties)
+        filters = [bbox_filter, parameter_filters, time_filter]
 
         with Session(self._engine) as session:
-            parameter_query = (
-                select(self.pic)
-                .select_from(self.model)
-                .with_joins(self.joins)
-                .where(bbox_filter)
-                .where(parameter_filters)
-                .where(time_filter)
-                .distinct()
-            )
+            parameter_query = self._select(
+                self.pic, filters=filters
+            ).distinct()
 
             parameters = self._get_parameters(
                 [p for (p,) in session.execute(parameter_query)], aslist=True
@@ -205,12 +200,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
             }
 
             location_query = (
-                select(self.lc, self.gc)
-                .select_from(self.model)
-                .with_joins(self.joins)
-                .where(bbox_filter)
-                .where(parameter_filters)
-                .where(time_filter)
+                self._select(self.lc, self.gc, filters=filters)
                 .distinct(self.lc)
                 .limit(limit)
             )
@@ -245,14 +235,12 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
 
         parameter_filters = self._get_parameter_filters(select_properties)
         time_filter = self._get_datetime_filter(datetime_)
+        filters = [self.lc == location_id, parameter_filters, time_filter]
+
         with Session(self._engine) as session:
-            location_query = (
-                select(self.gc)
-                .select_from(self.model)
-                .with_joins(self.joins, isouter=True)
-                .where(self.lc == location_id)
-                .distinct()
-            )
+            location_query = self._select(
+                self.gc, filters=[self.lc == location_id]
+            ).distinct()
 
             geom = session.execute(location_query).scalar()
 
@@ -276,15 +264,9 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
                     "values": shapely.geometry.mapping(geom),
                 }
 
-            parameter_query = (
-                select(self.pic)
-                .select_from(self.model)
-                .with_joins(self.joins)
-                .where(self.lc == location_id)
-                .where(parameter_filters)
-                .where(time_filter)
-                .distinct()
-            )
+            parameter_query = self._select(
+                self.pic, filters=filters
+            ).distinct()
 
             parameters = {p for (p,) in session.execute(parameter_query)}
 
@@ -299,12 +281,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
                 }
 
             time_query = (
-                select(self.tc)
-                .select_from(self.model)
-                .with_joins(self.joins, isouter=True)
-                .where(self.lc == location_id)
-                .where(parameter_filters)
-                .where(time_filter)
+                self._select(self.tc, filters=filters)
                 .order_by(self.tc.desc())
                 .distinct()
                 .limit(limit)
@@ -441,6 +418,14 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
             setattr(table_model, ext_table, ext_relationship)
 
         return tuple(allowed)
+
+    def _select(self, *selections, filters=[]):
+        return (
+            select(*selections)
+            .select_from(self.model)
+            .with_joins(self.joins)
+            .filter(*filters)
+        )
 
     def __repr__(self):
         return f"<EDRProvider> {self.table}"
