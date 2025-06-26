@@ -186,16 +186,19 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
                 "numberReturned": 0,
             }
 
+            extraparams = [
+                gqname(self.model, p).label(p) for p in self.properties
+            ]
             location_query = (
-                self._select(self.lc, self.gc, self.model, filters=filters)
+                self._select(self.lc, self.gc, *extraparams, filters=filters)
                 .distinct(self.lc)
                 .limit(limit)
             )
 
-            for id, geom in session.execute(location_query):
+            for id, geom, *row in session.execute(location_query):
                 response["numberReturned"] += 1
                 response["features"].append(
-                    self._sqlalchemy_to_feature(id, geom)
+                    self._sqlalchemy_to_feature(id, geom, row)
                 )
 
         return response
@@ -296,11 +299,18 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
 
         return coverage
 
-    def _sqlalchemy_to_feature(self, id, wkb_geom, crs_transform_out=None):
+    def _sqlalchemy_to_feature(
+        self, id, wkb_geom, props=None, crs_transform_out=None
+    ):
         feature = {
             "type": "Feature",
             "id": id,
         }
+
+        if props:
+            feature["properties"] = {
+                k: v for (k, v) in zip(self.properties, props)
+            }
 
         # Convert geometry to GeoJSON style
         try:

@@ -128,6 +128,24 @@ def test_locations(config):
 
     feature = locations["features"][0]
     assert feature["id"] == "DCA"
+    assert not feature.get("properties")
+
+
+def test_locations_with_prop(config):
+    config["properties"] = [
+        "airline",
+    ]
+    p = MySQLEDRProvider(config)
+
+    locations = p.locations()
+
+    assert locations["type"] == "FeatureCollection"
+    assert len(locations["features"]) == 3
+
+    feature = locations["features"][0]
+    assert feature["id"] == "DCA"
+    assert feature.get("properties")
+    assert "airline" in feature.get("properties")
 
 
 def test_locations_limit(config):
