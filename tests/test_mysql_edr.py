@@ -124,7 +124,7 @@ def test_locations(config):
     locations = p.locations()
 
     assert locations["type"] == "FeatureCollection"
-    assert len(locations["features"]) == 3
+    assert len(locations["features"]) == 4
 
     feature = locations["features"][0]
     assert feature["id"] == "DCA"
@@ -138,9 +138,8 @@ def test_locations_with_prop(config):
     p = MySQLEDRProvider(config)
 
     locations = p.locations()
-
     assert locations["type"] == "FeatureCollection"
-    assert len(locations["features"]) == 3
+    assert len(locations["features"]) == 4
 
     feature = locations["features"][0]
     assert feature["id"] == "DCA"
@@ -157,7 +156,7 @@ def test_locations_limit(config):
 
     locations = p.locations(limit=500)
     assert locations["type"] == "FeatureCollection"
-    assert len(locations["features"]) == 3
+    assert len(locations["features"]) == 4
 
     locations = p.locations(limit=3)
     assert locations["type"] == "FeatureCollection"
@@ -175,7 +174,7 @@ def test_locations_select_param(config):
     p = MySQLEDRProvider(config)
 
     locations = p.locations()
-    assert len(locations["features"]) == 3
+    assert len(locations["features"]) == 4
     assert len(locations["parameters"]) == 1
 
     locations = p.locations(select_properties=["00010"])

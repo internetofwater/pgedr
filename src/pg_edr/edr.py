@@ -240,16 +240,18 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
             except TypeError:
                 geom = shape(geom)
 
-            coverage["domain"]["domainType"] = geom.geom_type
+            coverage["domain"]["domainType"] = geom.geom_type.lstrip("Multi")
             if geom.geom_type == "Point":
                 coverage["domain"]["axes"].update(
                     {"x": {"values": [geom.x]}, "y": {"values": [geom.y]}}
                 )
             else:
+                values = mapping(geom)["coordinates"]
+                values = values if "Multi" in geom.geom_type else [values]
                 coverage["domain"]["axes"]["composite"] = {
                     "dataType": "polygon",
                     "coordinates": ["x", "y"],
-                    "values": mapping(geom),
+                    "values": values,
                 }
 
             parameter_query = self._select(
