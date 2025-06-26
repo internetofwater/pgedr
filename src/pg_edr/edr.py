@@ -6,7 +6,7 @@ import logging
 from geoalchemy2 import Geometry  # noqa - this isn't used explicitly but is needed to process Geometry columns
 from geoalchemy2.functions import ST_MakeEnvelope
 from geoalchemy2.shape import to_shape
-import shapely
+from shapely.geometry import shape, mapping
 from typing import Optional
 
 from sqlalchemy import func, case, select
@@ -16,24 +16,10 @@ from sqlalchemy.sql.expression import or_, and_
 from pygeoapi.provider.base_edr import BaseEDRProvider
 from pygeoapi.provider.sql import GenericSQLProvider
 
-from pg_edr.lib import get_base_schema
+from pg_edr.lib import get_base_schema, empty_coverage, empty_range
 from pg_edr.lib import get_column_from_qualified_name as gqname
 
 LOGGER = logging.getLogger(__name__)
-
-
-GEOGRAPHIC_CRS = {
-    "coordinates": ["x", "y"],
-    "system": {
-        "type": "GeographicCRS",
-        "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
-    },
-}
-
-TEMPORAL_RS = {
-    "coordinates": ["t"],
-    "system": {"type": "TemporalRS", "calendar": "Gregorian"},
-}
 
 
 class EDRProvider(BaseEDRProvider, GenericSQLProvider):
@@ -121,7 +107,9 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         LOGGER.debug("Get available fields/properties")
 
         if not self._fields and hasattr(self, "parameter_id"):
-            query = select(self.pic, self.pnc, self.puc).with_joins(self.joins)
+            query = self._select(self.pic, self.pnc, self.puc).distinct(
+                self.pic
+            )
 
             with Session(self._engine) as session:
                 for pid, pname, punit in session.execute(query):
@@ -139,6 +127,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         Retrieve a collection of items.
 
         :param kwargs: Additional parameters for the request.
+
         :returns: A GeoJSON representation of the items.
         """
 
@@ -149,20 +138,21 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
     @BaseEDRProvider.register()
     def locations(
         self,
+        location_id: str = None,
         select_properties: list = [],
         bbox: list = [],
         datetime_: str = None,
         limit: int = 100,
-        location_id: str = None,
         **kwargs,
     ):
         """
-        Extract and return location data from ObservedProperties.
+        Extract and return location from SQL table.
 
+        :param location_id: Identifier of the location to filter by.
         :param select_properties: List of properties to include.
         :param bbox: Bounding box geometry for spatial queries.
         :param datetime_: Temporal filter for observations.
-        :param location_id: Identifier of the location to filter by.
+        :param limit: number of records to return (default 100)
 
         :returns: A GeoJSON FeatureCollection of locations.
         """
@@ -175,19 +165,16 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         bbox_filter = self._get_bbox_filter(bbox)
         time_filter = self._get_datetime_filter(datetime_)
         parameter_filters = self._get_parameter_filters(select_properties)
+        filters = [bbox_filter, parameter_filters, time_filter]
 
         with Session(self._engine) as session:
-            parameter_query = (
-                select(self.pic)
-                .select_from(self.model)
-                .with_joins(self.joins)
-                .where(bbox_filter)
-                .where(parameter_filters)
-                .where(time_filter)
-            )
+            parameter_query = self._select(
+                self.pic, filters=filters
+            ).distinct()
 
             parameters = self._get_parameters(
-                [p for (p,) in session.execute(parameter_query)], aslist=True
+                [str(p) for (p,) in session.execute(parameter_query)],
+                aslist=True,
             )
 
             LOGGER.debug("Preparing response")
@@ -198,21 +185,19 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
                 "numberReturned": 0,
             }
 
+            extraparams = [
+                gqname(self.model, p).label(p) for p in self.properties
+            ]
             location_query = (
-                select(self.lc, self.gc)
-                .select_from(self.model)
-                .with_joins(self.joins)
+                self._select(self.lc, self.gc, *extraparams, filters=filters)
                 .distinct(self.lc)
-                .where(bbox_filter)
-                .where(parameter_filters)
-                .where(time_filter)
                 .limit(limit)
             )
 
-            for id, geom in session.execute(location_query):
+            for id, geom, *extraparams in session.execute(location_query):
                 response["numberReturned"] += 1
                 response["features"].append(
-                    self._sqlalchemy_to_feature(id, geom)
+                    self._sqlalchemy_to_feature(id, geom, extraparams)
                 )
 
         return response
@@ -225,78 +210,62 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         limit: int = 100,
         **kwargs,
     ):
-        coverage = {
-            "type": "Coverage",
-            "domain": {
-                "type": "Domain",
-                "domainType": "",
-                "axes": {"t": {"values": []}},
-                "referencing": [GEOGRAPHIC_CRS, TEMPORAL_RS],
-            },
-            "parameters": [],
-            "ranges": {},
-        }
+        """
+        Extract and return single location from SQL table.
+
+        :param location_id: Identifier of the location to filter by.
+        :param select_properties: List of properties to include.
+        :param bbox: Bounding box geometry for spatial queries.
+        :param datetime_: Temporal filter for observations.
+        :param limit: number of records to return (default 100)
+
+        :returns: A CovJSON of location data.
+        """
+
+        coverage = empty_coverage()
 
         parameter_filters = self._get_parameter_filters(select_properties)
         time_filter = self._get_datetime_filter(datetime_)
+        filters = [self.lc == location_id, parameter_filters, time_filter]
+
         with Session(self._engine) as session:
-            location_query = (
-                select(self.gc)
-                .select_from(self.model)
-                .with_joins(self.joins, isouter=True)
-                .where(self.lc == location_id)
-            )
+            location_query = self._select(
+                self.gc, filters=[self.lc == location_id]
+            ).distinct()
 
             geom = session.execute(location_query).scalar()
 
             try:
                 geom = to_shape(geom)
             except TypeError:
-                geom = shapely.geometry.shape(geom)
+                geom = shape(geom)
 
-            coverage["domain"]["domainType"] = geom.geom_type
+            coverage["domain"]["domainType"] = geom.geom_type.lstrip("Multi")
             if geom.geom_type == "Point":
                 coverage["domain"]["axes"].update(
-                    {
-                        "x": {"values": [geom.x]},
-                        "y": {"values": [geom.y]},
-                    }
+                    {"x": {"values": [geom.x]}, "y": {"values": [geom.y]}}
                 )
             else:
+                values = mapping(geom)["coordinates"]
+                values = values if "Multi" in geom.geom_type else [values]
                 coverage["domain"]["axes"]["composite"] = {
                     "dataType": "polygon",
                     "coordinates": ["x", "y"],
-                    "values": shapely.geometry.mapping(geom),
+                    "values": values,
                 }
 
-            properties_query = (
-                select(self.pic)
-                .select_from(self.model)
-                .with_joins(self.joins)
-                .where(self.lc == location_id)
-                .where(parameter_filters)
-                .where(time_filter)
-            )
+            parameter_query = self._select(
+                self.pic, filters=filters
+            ).distinct()
 
-            parameters = {p for (p,) in session.execute(properties_query)}
+            parameters = {str(p) for (p,) in session.execute(parameter_query)}
 
             coverage["parameters"] = self._get_parameters(parameters)
             for p in parameters:
-                coverage["ranges"][str(p)] = {
-                    "type": "NdArray",
-                    "dataType": "float",
-                    "axisNames": ["t"],
-                    "shape": [0],
-                    "values": [],
-                }
+                coverage["ranges"][p] = empty_range()
 
             time_query = (
-                select(self.tc)
-                .select_from(self.model)
-                .with_joins(self.joins, isouter=True)
-                .where(self.lc == location_id)
-                .where(parameter_filters)
-                .where(time_filter)
+                self._select(self.tc, filters=filters)
                 .order_by(self.tc.desc())
                 .distinct()
                 .limit(limit)
@@ -311,9 +280,8 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
                     (
                         and_(parameter == self.pic, location_id == self.lc),
                         self.rc,
-                    ),
-                    else_=None,
-                ).label(str(parameter))
+                    )
+                ).label(parameter)
                 for parameter in parameters
             ]
 
@@ -334,40 +302,61 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
             for row in results.limit(limit):
                 row = row._asdict()
                 t_values.append(row.pop(self.time_field))
+
                 for pname, value in row.items():
-                    parameter = coverage["ranges"][pname]
-                    parameter["values"].append(value)
-                    parameter["shape"][0] += 1
+                    coverage["ranges"][pname]["values"].append(value)
+                    coverage["ranges"][pname]["shape"][0] += 1
 
         if len(t_values) > 1:
             coverage["domain"]["domainType"] += "Series"
 
         return coverage
 
-    def _sqlalchemy_to_feature(self, id, wkb_geom, crs_transform_out=None):
+    def _sqlalchemy_to_feature(self, id, wkb_geom, properties=[]):
+        """
+        Create GeoJSON of location.
+
+        :param id: Identifier of the location.
+        :param wkb_geom: Geommetry of the location.
+        :param properties: Additional fields for feature properties.
+
+        :returns: A Feature of location data.
+        """
+
         feature = {
             "type": "Feature",
             "id": id,
         }
 
+        if properties:
+            feature["properties"] = {
+                k: v for (k, v) in zip(self.properties, properties)
+            }
+
         # Convert geometry to GeoJSON style
         try:
             shapely_geom = to_shape(wkb_geom)
         except TypeError:
-            shapely_geom = shapely.geometry.shape(wkb_geom)
-        if crs_transform_out is not None:
-            shapely_geom = crs_transform_out(shapely_geom)
-        geojson_geom = shapely.geometry.mapping(shapely_geom)
+            shapely_geom = shape(wkb_geom)
+
+        geojson_geom = mapping(shapely_geom)
         feature["geometry"] = geojson_geom
 
         return feature
 
-    def _get_parameter_filters(self, parameter):
-        if not parameter:
+    def _get_parameter_filters(self, parameters):
+        """
+        Generate parameter filters
+
+        :param parameters: The datastream data to generate filters for.
+
+        :returns: A SQL alchemy filter for the parameters.
+        """
+        if not parameters:
             return True  # Let everything through
 
         # Convert parameter filters into SQL Alchemy filters
-        filter_group = [self.pic == value for value in parameter]
+        filter_group = [self.pic == value for value in parameters]
         return or_(*filter_group)
 
     def _get_parameters(self, parameters: set = {}, aslist=False):
@@ -405,6 +394,11 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         return list(out_params.values()) if aslist else out_params
 
     def _get_relationships(self):
+        """
+        Generate SQL table joins
+
+        :returns: A list of valid table relationships.
+        """
         allowed = list()
         for ext_table, rel in self.external_tables.items():
             if "." in ext_table:
@@ -433,6 +427,22 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
             setattr(table_model, ext_table, ext_relationship)
 
         return tuple(allowed)
+
+    def _select(self, *selections, filters=[True]):
+        """
+        Generate select
+
+        :param selections: Columns to select.
+        :param filters: Filters to apply if any.
+
+        :returns: A SQl Alchemy select statement.
+        """
+        return (
+            select(*selections)
+            .select_from(self.model)
+            .with_joins(self.joins)
+            .filter(*filters)
+        )
 
     def __repr__(self):
         return f"<EDRProvider> {self.table}"

@@ -129,6 +129,24 @@ def test_locations(config):
 
     feature = locations["features"][0]
     assert feature["id"] == "USGS-01465798"
+    assert not feature.get("properties")
+
+
+def test_locations_with_prop(config):
+    config["properties"] = [
+        "timeseries_id",
+    ]
+    p = PostgresEDRProvider(config)
+
+    locations = p.locations()
+
+    assert locations["type"] == "FeatureCollection"
+    assert len(locations["features"]) == 23
+
+    feature = locations["features"][0]
+    assert feature["id"] == "USGS-01465798"
+    assert feature.get("properties")
+    assert "timeseries_id" in feature.get("properties")
 
 
 def test_locations_limit(config):
