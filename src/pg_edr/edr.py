@@ -6,7 +6,7 @@ import logging
 from geoalchemy2 import Geometry  # noqa - this isn't used explicitly but is needed to process Geometry columns
 from geoalchemy2.functions import ST_MakeEnvelope
 from geoalchemy2.shape import to_shape
-import shapely
+from shapely.geometry import shape, mapping
 from typing import Optional
 
 from sqlalchemy import func, case, select
@@ -16,7 +16,7 @@ from sqlalchemy.sql.expression import or_, and_
 from pygeoapi.provider.base_edr import BaseEDRProvider
 from pygeoapi.provider.sql import GenericSQLProvider
 
-from pg_edr.lib import get_base_schema, empty_coverage
+from pg_edr.lib import get_base_schema, empty_coverage, empty_range
 from pg_edr.lib import get_column_from_qualified_name as gqname
 
 LOGGER = logging.getLogger(__name__)
@@ -174,7 +174,8 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
             ).distinct()
 
             parameters = self._get_parameters(
-                [p for (p,) in session.execute(parameter_query)], aslist=True
+                [str(p) for (p,) in session.execute(parameter_query)],
+                aslist=True,
             )
 
             LOGGER.debug("Preparing response")
@@ -186,7 +187,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
             }
 
             location_query = (
-                self._select(self.lc, self.gc, filters=filters)
+                self._select(self.lc, self.gc, self.model, filters=filters)
                 .distinct(self.lc)
                 .limit(limit)
             )
@@ -223,38 +224,29 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
             try:
                 geom = to_shape(geom)
             except TypeError:
-                geom = shapely.geometry.shape(geom)
+                geom = shape(geom)
 
             coverage["domain"]["domainType"] = geom.geom_type
             if geom.geom_type == "Point":
                 coverage["domain"]["axes"].update(
-                    {
-                        "x": {"values": [geom.x]},
-                        "y": {"values": [geom.y]},
-                    }
+                    {"x": {"values": [geom.x]}, "y": {"values": [geom.y]}}
                 )
             else:
                 coverage["domain"]["axes"]["composite"] = {
                     "dataType": "polygon",
                     "coordinates": ["x", "y"],
-                    "values": shapely.geometry.mapping(geom),
+                    "values": mapping(geom),
                 }
 
             parameter_query = self._select(
                 self.pic, filters=filters
             ).distinct()
 
-            parameters = {p for (p,) in session.execute(parameter_query)}
+            parameters = {str(p) for (p,) in session.execute(parameter_query)}
 
             coverage["parameters"] = self._get_parameters(parameters)
             for p in parameters:
-                coverage["ranges"][str(p)] = {
-                    "type": "NdArray",
-                    "dataType": "float",
-                    "axisNames": ["t"],
-                    "shape": [0],
-                    "values": [],
-                }
+                coverage["ranges"][p] = empty_range()
 
             time_query = (
                 self._select(self.tc, filters=filters)
@@ -272,9 +264,8 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
                     (
                         and_(parameter == self.pic, location_id == self.lc),
                         self.rc,
-                    ),
-                    else_=None,
-                ).label(str(parameter))
+                    )
+                ).label(parameter)
                 for parameter in parameters
             ]
 
@@ -295,10 +286,10 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
             for row in results.limit(limit):
                 row = row._asdict()
                 t_values.append(row.pop(self.time_field))
+
                 for pname, value in row.items():
-                    parameter = coverage["ranges"][pname]
-                    parameter["values"].append(value)
-                    parameter["shape"][0] += 1
+                    coverage["ranges"][pname]["values"].append(value)
+                    coverage["ranges"][pname]["shape"][0] += 1
 
         if len(t_values) > 1:
             coverage["domain"]["domainType"] += "Series"
@@ -315,10 +306,10 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         try:
             shapely_geom = to_shape(wkb_geom)
         except TypeError:
-            shapely_geom = shapely.geometry.shape(wkb_geom)
+            shapely_geom = shape(wkb_geom)
         if crs_transform_out is not None:
             shapely_geom = crs_transform_out(shapely_geom)
-        geojson_geom = shapely.geometry.mapping(shapely_geom)
+        geojson_geom = mapping(shapely_geom)
         feature["geometry"] = geojson_geom
 
         return feature

@@ -58,6 +58,19 @@ def empty_coverage_collection() -> dict[str, Any]:
     }
 
 
+def empty_range() -> dict[str, Any]:
+    """
+    Return empty Range dictionary.
+    """
+    return {
+        "type": "NdArray",
+        "dataType": "float",
+        "axisNames": ["t"],
+        "shape": [0],
+        "values": [],
+    }
+
+
 def recursive_getattr(obj: Any, attr: str) -> Any:
     """
     Recursively traverse an object's attributes single dot
