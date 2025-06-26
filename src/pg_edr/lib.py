@@ -104,6 +104,9 @@ def get_column_from_qualified_name(model: Any, path: str) -> Any:
 
 @functools.cache
 def get_base_schema(tables: tuple[str], schema: str, engine):
+    """Function used when automapping classes and relationships from
+    database schema.
+    """
     metadata = MetaData()
 
     try:
@@ -145,7 +148,7 @@ def _name_for_scalar_relationship(
 
 
 def with_joins(query, joins, **kw):
-    """ """
+    """Function to chain sql joins"""
     for join in joins:
         query = query.join(*join, **kw)
     return query
