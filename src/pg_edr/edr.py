@@ -113,7 +113,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
 
             with Session(self._engine) as session:
                 for pid, pname, punit in session.execute(query):
-                    self._fields[pid] = {
+                    self._fields[str(pid)] = {
                         "type": "number",
                         "title": pname,
                         "x-ogc-unit": punit,
