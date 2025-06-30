@@ -121,7 +121,6 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
 
         return self._fields
 
-    @BaseEDRProvider.register()
     def items(self, **kwargs):
         """
         Retrieve a collection of items.
@@ -135,7 +134,6 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         # We implement this method inside of the feature provider
         pass
 
-    @BaseEDRProvider.register()
     def locations(
         self,
         location_id: str = None,
@@ -483,6 +481,12 @@ class PostgresEDRProvider(EDRProvider):
 
         return bbox_filter
 
+    def locations(self, *args, **kwargs):
+        """
+        Service EDR queries
+        """
+        return super().locations(*args, **kwargs)
+
 
 class MySQLEDRProvider(EDRProvider):
     """
@@ -525,3 +529,9 @@ class MySQLEDRProvider(EDRProvider):
             func.ST_GeomFromText(polygon_wkt), self.gc
         )
         return bbox_filter
+
+    def locations(self, *args, **kwargs):
+        """
+        Service EDR queries
+        """
+        return super().locations(*args, **kwargs)
