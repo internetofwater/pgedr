@@ -121,7 +121,6 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
 
         return self._fields
 
-    @BaseEDRProvider.register()
     def items(self, **kwargs):
         """
         Retrieve a collection of items.
@@ -135,7 +134,6 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         # We implement this method inside of the feature provider
         pass
 
-    @BaseEDRProvider.register()
     def locations(
         self,
         location_id: str = None,

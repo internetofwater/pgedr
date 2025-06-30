@@ -807,7 +807,7 @@ wheels = [
 [[package]]
 name = "pygeoapi"
 version = "0.21.dev0"
-source = { git = "https://github.com/geopython/pygeoapi.git?rev=master#c3084773bc8c3b6f722adf335128cf164b82223e" }
+source = { git = "https://github.com/geopython/pygeoapi.git?rev=master#53418d7508c59ba2af4f778d0ad921423e409d94" }
 dependencies = [
     { name = "babel" },
     { name = "click" },
