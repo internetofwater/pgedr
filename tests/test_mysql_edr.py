@@ -218,3 +218,11 @@ def test_get_location(config):
         assert range["shape"][0] == t_len
         assert len(range["values"]) == t_len
         assert range["values"] == [88, 87, 85, 90, 89]
+
+
+def test_locations_time(config):
+    p = MySQLEDRProvider(config)
+
+    locations = p.locations(datetime_="2025-04-30")
+    assert len(locations["features"]) == 1
+    assert len(locations["parameters"]) == 1

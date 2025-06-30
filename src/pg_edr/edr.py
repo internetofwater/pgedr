@@ -410,6 +410,23 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
 
         return tuple(allowed)
 
+    def _get_datetime_filter(self, datetime_):
+        if datetime_ in (None, "../.."):
+            return True
+        else:
+            if "/" in datetime_:  # envelope
+                LOGGER.debug("detected time range")
+                time_begin, time_end = datetime_.split("/")
+                if time_begin == "..":
+                    datetime_filter = self.tc <= time_end
+                elif time_end == "..":
+                    datetime_filter = self.tc >= time_begin
+                else:
+                    datetime_filter = self.tc.between(time_begin, time_end)
+            else:
+                datetime_filter = self.tc == datetime_
+        return datetime_filter
+
     def _select(self, *selections, filters=[True]):
         """
         Generate select
