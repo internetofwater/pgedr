@@ -121,19 +121,6 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
 
         return self._fields
 
-    def items(self, **kwargs):
-        """
-        Retrieve a collection of items.
-
-        :param kwargs: Additional parameters for the request.
-
-        :returns: A GeoJSON representation of the items.
-        """
-
-        # This method is empty due to the way pygeoapi handles items requests
-        # We implement this method inside of the feature provider
-        pass
-
     def locations(
         self,
         location_id: str = None,
@@ -485,7 +472,20 @@ class PostgresEDRProvider(EDRProvider):
         """
         Service EDR queries
         """
-        return super().locations(*args, **kwargs)
+        return EDRProvider.locations(self, *args, **kwargs)
+
+    def items(self, **kwargs):
+        """
+        Retrieve a collection of items.
+
+        :param kwargs: Additional parameters for the request.
+
+        :returns: A GeoJSON representation of the items.
+        """
+
+        # This method is empty due to the way pygeoapi handles items requests
+        # We implement this method inside of the feature provider
+        pass
 
 
 class MySQLEDRProvider(EDRProvider):
@@ -534,4 +534,17 @@ class MySQLEDRProvider(EDRProvider):
         """
         Service EDR queries
         """
-        return super().locations(*args, **kwargs)
+        return EDRProvider.locations(self, *args, **kwargs)
+
+    def items(self, **kwargs):
+        """
+        Retrieve a collection of items.
+
+        :param kwargs: Additional parameters for the request.
+
+        :returns: A GeoJSON representation of the items.
+        """
+
+        # This method is empty due to the way pygeoapi handles items requests
+        # We implement this method inside of the feature provider
+        pass
