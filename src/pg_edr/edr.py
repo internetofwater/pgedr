@@ -9,7 +9,7 @@ from geoalchemy2.shape import to_shape
 from shapely.geometry import shape, mapping
 from typing import Optional
 
-from sqlalchemy import func, case, select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, relationship, aliased
 from sqlalchemy.sql.expression import or_, and_
 
@@ -266,7 +266,6 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
 
             time_query = (
                 self._select(self.tc, filters=filters)
-                .order_by(self.tc.desc())
                 .distinct()
                 .limit(limit)
                 .subquery()
@@ -275,31 +274,29 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
             time_alias = getattr(time_subquery, self.time_field)
 
             # Create select columns for each parameter
-            select_columns = [
-                case(
-                    (
-                        and_(parameter == self.pic, location_id == self.lc),
-                        self.rc,
-                    )
-                ).label(parameter)
-                for parameter in parameters
-            ]
+            select_columns = {}
+            for parameter in parameters:
+                model = aliased(self.model)
+                rc = getattr(model, self.result_field).label(parameter)
+                select_columns[rc] = (
+                    model,
+                    and_(
+                        time_alias == getattr(model, self.time_field),
+                        location_id == getattr(model, self.location_field),
+                        parameter == getattr(model, self.parameter_id),
+                    ),
+                )
 
             # Construct the query
             results = (
-                session.query(time_alias, *select_columns)
+                select(time_alias, *select_columns)
+                .order_by(time_alias.desc())
                 .select_from(time_subquery)
-                .outerjoin(
-                    self.model,
-                    and_(
-                        time_alias == self.tc,
-                        location_id == self.lc,
-                    ),
-                )
+                .with_joins(select_columns.values(), isouter=True)
             )
 
             t_values = coverage["domain"]["axes"]["t"]["values"]
-            for row in results.limit(limit):
+            for row in session.execute(results):
                 row = row._asdict()
                 t_values.append(row.pop(self.time_field))
 
