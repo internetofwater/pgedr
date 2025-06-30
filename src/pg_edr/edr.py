@@ -481,6 +481,12 @@ class PostgresEDRProvider(EDRProvider):
 
         return bbox_filter
 
+    def locations(self, *args, **kwargs):
+        """
+        Service EDR queries
+        """
+        return super().locations(*args, **kwargs)
+
 
 class MySQLEDRProvider(EDRProvider):
     """
@@ -523,3 +529,9 @@ class MySQLEDRProvider(EDRProvider):
             func.ST_GeomFromText(polygon_wkt), self.gc
         )
         return bbox_filter
+
+    def locations(self, *args, **kwargs):
+        """
+        Service EDR queries
+        """
+        return super().locations(*args, **kwargs)
