@@ -228,3 +228,11 @@ def test_get_location(config):
         assert range["shape"][0] == t_len
         assert len(range["values"]) == t_len
         assert range["values"] == [5.08, 5.22, 4.5, 6.94, 8.39]
+
+
+def test_locations_time(config):
+    p = PostgresEDRProvider(config)
+
+    locations = p.locations(datetime_="2024-11-17")
+    assert len(locations["features"]) == 1
+    assert len(locations["parameters"]) == 1
