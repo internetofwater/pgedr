@@ -216,7 +216,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         with Session(self._engine) as session:
             location_query = self._select(
                 self.gc, filters=[self.lc == location_id]
-            ).distinct()
+            )
 
             geom = session.execute(location_query).scalar()
 
@@ -252,6 +252,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
             time_query = (
                 self._select(self.tc, filters=filters)
                 .distinct()
+                .order_by(self.tc.desc())
                 .limit(limit)
                 .subquery()
             )
