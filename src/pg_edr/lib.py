@@ -4,7 +4,7 @@
 import functools
 from typing import Any
 
-from sqlalchemy import MetaData
+from sqlalchemy import MetaData, PrimaryKeyConstraint
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.sql import Select
@@ -103,7 +103,7 @@ def get_column_from_qualified_name(model: Any, path: str) -> Any:
 
 
 @functools.cache
-def get_base_schema(tables: tuple[str], schema: str, engine):
+def get_base_schema(tables: tuple[str], schema: str, engine, id_column: str = None):
     """Function used when automapping classes and relationships from
     database schema.
     """
@@ -121,6 +121,25 @@ def get_base_schema(tables: tuple[str], schema: str, engine):
         raise ProviderConnectionError(
             f"Could not connect to {repr(engine.url)} (password hidden)."
         )
+
+    # Add primary keys to views before automap
+    for table_name, table in metadata.tables.items():
+        if not table.primary_key.columns and table.columns:
+            # Use the specified ID column if provided
+            if id_column and id_column in table.columns:
+                pk_col = table.columns[id_column]
+            else:
+                # Fallback to first column if ID column not found
+                pk_col = list(table.columns)[0]
+                LOGGER.warning(
+                    f"ID column '{id_column}' not found in {table_name}, using {pk_col.name}"
+                )
+
+            pk_col.primary_key = True
+            pk_constraint = PrimaryKeyConstraint(pk_col.name)
+            table.append_constraint(pk_constraint)
+
+            LOGGER.debug(f"Added primary key to {table_name}: {pk_col.name}")
 
     _Base = automap_base(metadata=metadata)
     _Base.prepare(
