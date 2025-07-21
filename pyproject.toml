@@ -45,8 +45,8 @@ classifiers=[   # see https://pypi.org/classifiers/
     ]
 
 [project.urls]
-Homepage = "https://github.com/internetofwater/pygeoapi-sql-edr"
-Repository = "https://github.com/internetofwater/pygeoapi-sql-edr"
+Homepage = "https://github.com/internetofwater/pgedr"
+Repository = "https://github.com/internetofwater/pgedr"
 
 [tool.pytest.ini_options]
 addopts = "--cov=pg_edr"
