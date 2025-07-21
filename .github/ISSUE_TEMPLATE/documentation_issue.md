@@ -1,10 +1,9 @@
 ---
 name: Documentation issue
 about: Create a report to improve documenation
-title: ''
+title: ""
 labels: documentation
-assignees: ''
-
+assignees: ""
 ---
 
 **Description**
