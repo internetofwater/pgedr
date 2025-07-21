@@ -103,7 +103,9 @@ def get_column_from_qualified_name(model: Any, path: str) -> Any:
 
 
 @functools.cache
-def get_base_schema(tables: tuple[str], schema: str, engine, id_column: str = None):
+def get_base_schema(
+    tables: tuple[str], schema: str, engine, id_column: str = None
+):
     """Function used when automapping classes and relationships from
     database schema.
     """
@@ -132,7 +134,7 @@ def get_base_schema(tables: tuple[str], schema: str, engine, id_column: str = No
                 # Fallback to first column if ID column not found
                 pk_col = list(table.columns)[0]
                 LOGGER.warning(
-                    f"ID column '{id_column}' not found in {table_name}, using {pk_col.name}"
+                    f"ID column '{id_column}' not found in {table_name}, using {pk_col.name}"  #  noqa
                 )
 
             pk_col.primary_key = True

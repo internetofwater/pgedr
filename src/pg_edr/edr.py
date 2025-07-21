@@ -66,7 +66,10 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         self.table_models = (self.table, *external_tables)
 
         self.base = get_base_schema(
-            self.table_models, self.db_search_path[0], self._engine, self.id_field
+            self.table_models,
+            self.db_search_path[0],
+            self._engine,
+            self.id_field,
         )
         self.joins = self._get_relationships()
         self.model = self.base.classes[self.table]
