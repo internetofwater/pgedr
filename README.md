@@ -1,6 +1,6 @@
 # pygeoapi Environmental Data Retrieval
 
-This repository contains SQL pygeoapi providers for OGC API - Environmental Data Retrieval.
+This repository contains SQL [pygeoapi](https://github.com/geopython/pygeoapi) providers for OGC API - Environmental Data Retrieval (EDR).
 
 ## OGC API - EDR
 
