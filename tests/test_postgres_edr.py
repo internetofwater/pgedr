@@ -10,7 +10,7 @@ from pg_edr.lib import get_column_from_qualified_name as gqname
 from pg_edr.lib import recursive_getattr as rgetattr
 
 
-@pytest.fixture(params=['tables', 'views'])
+@pytest.fixture(params=["tables", "views"])
 def config(request):
     pygeoapi_config = {
         "name": "PostgresEDRProvider",
@@ -41,13 +41,15 @@ def config(request):
         },
     }
 
-    if request.param == 'tables':
+    if request.param == "tables":
         return pygeoapi_config
 
-    if  request.param == 'views':
-        pygeoapi_config['table'] = 'waterservices_daily_vw'
-        pygeoapi_config['edr_fields']['parameter_name'] = 'waterservices_timeseries_metadata_vw.parameter_name'
-        pygeoapi_config['external_tables'] = {
+    if request.param == "views":
+        pygeoapi_config["table"] = "waterservices_daily_vw"
+        pygeoapi_config["edr_fields"]["parameter_name"] = (
+            "waterservices_timeseries_metadata_vw.parameter_name"
+        )
+        pygeoapi_config["external_tables"] = {
             "waterservices_timeseries_metadata_vw": {
                 "foreign": "parameter_code",
                 "remote": "parameter_code",

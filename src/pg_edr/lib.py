@@ -134,7 +134,7 @@ def get_base_schema(
                 # Fallback to first column if ID column not found
                 pk_col = list(table.columns)[0]
                 LOGGER.warning(
-                    f"ID column '{id_column}' not found in {table_name}, using {pk_col.name}"  #  noqa
+                    f"ID column '{id_column}' not found in {table_name}, using {pk_col.name}"  # noqa: E501
                 )
 
             pk_col.primary_key = True
