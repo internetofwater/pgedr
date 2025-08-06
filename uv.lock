@@ -663,24 +663,17 @@ dependencies = [
     { name = "pytest-cov" },
 ]
 
-[package.optional-dependencies]
-dev = [
-    { name = "pygeoapi" },
-]
-
 [package.metadata]
 requires-dist = [
     { name = "cryptography", specifier = ">=44.0.3" },
     { name = "geoalchemy2" },
     { name = "psycopg2" },
     { name = "pydantic" },
-    { name = "pygeoapi" },
-    { name = "pygeoapi", marker = "extra == 'dev'", git = "https://github.com/geopython/pygeoapi.git?rev=master" },
+    { name = "pygeoapi", specifier = ">=0.21.0" },
     { name = "pymysql", specifier = ">=1.1.1" },
     { name = "pytest" },
     { name = "pytest-cov" },
 ]
-provides-extras = ["dev"]
 
 [[package]]
 name = "pluggy"
@@ -806,8 +799,8 @@ wheels = [
 
 [[package]]
 name = "pygeoapi"
-version = "0.21.dev0"
-source = { git = "https://github.com/geopython/pygeoapi.git?rev=master#53418d7508c59ba2af4f778d0ad921423e409d94" }
+version = "0.21.0"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "babel" },
     { name = "click" },
@@ -827,6 +820,10 @@ dependencies = [
     { name = "shapely" },
     { name = "sqlalchemy" },
     { name = "tinydb" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/61/06/faf4daa3cb5e61508b50e1020bf20d0cd7f6f2aea11d17c719dd21eea2e2/pygeoapi-0.21.0.tar.gz", hash = "sha256:2f5b07af8c6735e8259a468766821c22909e4c00e0c872dea8767d812164fa6a", size = 322051, upload-time = "2025-08-03T15:48:01.598Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f6/62/0cd4a9fba16340fa791648afc72fc8551bfd83fed84ed14a58725fe5054f/pygeoapi-0.21.0-py2.py3-none-any.whl", hash = "sha256:c2b97676cd5a5742eeb38e9608117de66354028a7309e5b026dd6d9a24f487fc", size = 511152, upload-time = "2025-08-03T15:48:00.257Z" },
 ]
 
 [[package]]

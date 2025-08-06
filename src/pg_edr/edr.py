@@ -11,7 +11,7 @@ from typing import Optional
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, relationship, aliased
-from sqlalchemy.sql.expression import or_, and_
+from sqlalchemy.sql.expression import or_
 
 from pygeoapi.provider.base_edr import BaseEDRProvider
 from pygeoapi.provider.sql import GenericSQLProvider
@@ -211,90 +211,83 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         """
 
         coverage = empty_coverage()
+        domain = coverage["domain"]
+        ranges = coverage["ranges"]
+        t_values = domain["axes"]["t"]["values"]
 
         parameter_filters = self._get_parameter_filters(select_properties)
         time_filter = self._get_datetime_filter(datetime_)
         filters = [self.lc == location_id, parameter_filters, time_filter]
 
         with Session(self._engine) as session:
+            # Get the geometry of the location
             location_query = self._select(
                 self.gc, filters=[self.lc == location_id]
-            )
+            ).limit(1)
 
             geom = session.execute(location_query).scalar()
-
             try:
                 geom = to_shape(geom)
             except TypeError:
                 geom = shape(geom)
 
-            coverage["domain"]["domainType"] = geom.geom_type.lstrip("Multi")
+            domain["domainType"] = geom.geom_type.lstrip("Multi")
             if geom.geom_type == "Point":
-                coverage["domain"]["axes"].update(
+                domain["axes"].update(
                     {"x": {"values": [geom.x]}, "y": {"values": [geom.y]}}
                 )
             else:
                 values = mapping(geom)["coordinates"]
                 values = values if "Multi" in geom.geom_type else [values]
-                coverage["domain"]["axes"]["composite"] = {
+                domain["axes"]["composite"] = {
                     "dataType": "polygon",
                     "coordinates": ["x", "y"],
                     "values": values,
                 }
 
+            # Add parameters to coverage
             parameter_query = self._select(
                 self.pic, filters=filters
             ).distinct()
-
             parameters = {str(p) for (p,) in session.execute(parameter_query)}
-
             coverage["parameters"] = self._get_parameters(parameters)
             for p in parameters:
-                coverage["ranges"][p] = empty_range()
+                ranges[p] = empty_range()
 
-            time_query = (
+            # Create the main query to fetch data
+            results = (
                 self._select(self.tc, filters=filters)
                 .distinct()
                 .order_by(self.tc.desc())
                 .limit(limit)
-                .subquery()
             )
-            time_subquery = aliased(self.model, time_query)
-            time_alias = getattr(time_subquery, self.time_field)
 
             # Create select columns for each parameter
-            select_columns = {}
             for parameter in parameters:
-                model = aliased(self.model)
-                rc = getattr(model, self.result_field).label(parameter)
-                select_columns[rc] = (
-                    model,
-                    and_(
-                        time_alias == getattr(model, self.time_field),
-                        location_id == getattr(model, self.location_field),
-                        parameter == getattr(model, self.parameter_id),
-                    ),
+                parameter_query = (
+                    self._select(self.tc, self.rc, filters=filters)
+                    .filter(self.pic == parameter)
+                    .subquery()
                 )
+                model = aliased(self.model, parameter_query)
+                rc = getattr(model, self.result_field).label(parameter)
+                tc = getattr(model, self.time_field)
+                results = results.join(model, self.tc == tc).add_columns(rc)
 
             # Construct the query
-            results = (
-                select(time_alias, *select_columns)
-                .order_by(time_alias.desc())
-                .select_from(time_subquery)
-                .with_joins(select_columns.values(), isouter=True)
-            )
-
-            t_values = coverage["domain"]["axes"]["t"]["values"]
             for row in session.execute(results):
                 row = row._asdict()
+
+                # Add time value to domain
                 t_values.append(row.pop(self.time_field))
 
+                # Add parameter values to ranges
                 for pname, value in row.items():
-                    coverage["ranges"][pname]["values"].append(value)
-                    coverage["ranges"][pname]["shape"][0] += 1
+                    ranges[pname]["values"].append(value)
+                    ranges[pname]["shape"][0] += 1
 
         if len(t_values) > 1:
-            coverage["domain"]["domainType"] += "Series"
+            domain["domainType"] += "Series"
 
         return coverage
 
@@ -315,8 +308,9 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         }
 
         if properties:
+            cleaned_properties = [p.split(".").pop() for p in self.properties]
             feature["properties"] = {
-                k: v for (k, v) in zip(self.properties, properties)
+                k: v for (k, v) in zip(cleaned_properties, properties)
             }
 
         # Convert geometry to GeoJSON style
