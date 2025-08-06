@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 import functools
+import logging
 from typing import Any
 
 from sqlalchemy import MetaData, PrimaryKeyConstraint
@@ -9,9 +10,11 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.sql import Select
 
-from pygeoapi.provider.base import ProviderConnectionError
+from pygeoapi.provider.base import (
+    ProviderConnectionError,
+    ProviderInvalidDataError,
+)
 
-import logging
 
 LOGGER = logging.getLogger(__name__)
 
@@ -92,7 +95,9 @@ def get_column_from_qualified_name(model: Any, path: str) -> Any:
     try:
         attr = getattr(model, parts[0])
     except AttributeError:
-        return model
+        raise ProviderInvalidDataError(
+            f"Attribute {parts[0]!r} not found in model {model.__name__!r}."
+        )
 
     if len(parts) == 1:
         return attr  # Final attribute — expected to be a column

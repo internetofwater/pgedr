@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session, InstrumentedAttribute
 import datetime
 import pytest
 
+from pygeoapi.provider.base import ProviderInvalidDataError
+
 from pg_edr.edr import PostgresEDRProvider
 from pg_edr.lib import get_column_from_qualified_name as gqname
 from pg_edr.lib import recursive_getattr as rgetattr
@@ -29,7 +31,7 @@ def config(request):
             "time_field": "time",
             "location_field": "monitoring_location_id",
             "result_field": "value",
-            "parameter_id": "parameter_code",
+            "parameter_id": "waterservices_timeseries_metadata.parameter_code",
             "parameter_name": "waterservices_timeseries_metadata.parameter_name",  # noqa
             "parameter_unit": "unit_of_measure",
         },
@@ -49,6 +51,9 @@ def config(request):
         pygeoapi_config["edr_fields"]["parameter_name"] = (
             "waterservices_timeseries_metadata_vw.parameter_name"
         )
+        pygeoapi_config["edr_fields"]["parameter_id"] = (
+            "waterservices_timeseries_metadata_vw.parameter_code"
+        )
         pygeoapi_config["external_tables"] = {
             "waterservices_timeseries_metadata_vw": {
                 "foreign": "parameter_code",
@@ -58,6 +63,12 @@ def config(request):
         return pygeoapi_config
 
     return None
+
+
+def test_invalid_config(config):
+    config["edr_fields"]["parameter_id"] = "invalid_parameter_id"
+    with pytest.raises(ProviderInvalidDataError):
+        PostgresEDRProvider(config)
 
 
 def test_external_table_relationships(config):
@@ -222,6 +233,7 @@ def test_get_location(config):
     assert domain["type"] == "Domain"
     assert domain["domainType"] == "PointSeries"
 
+    print(domain["axes"]["t"])
     assert domain["axes"]["x"]["values"] == [-74.98516031202179]
     assert domain["axes"]["y"]["values"] == [40.05695572943445]
     assert domain["axes"]["t"]["values"] == [
