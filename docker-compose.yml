@@ -10,6 +10,11 @@ services:
       - .env
     ports:
       - 5000:80
+    depends_on:
+      database:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
 
   database:
     image: postgis/postgis:14-3.2-alpine
@@ -19,6 +24,11 @@ services:
       - 5432:5432
     volumes:
       - ./tests/data/postgres/:/docker-entrypoint-initdb.d/:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+      interval: 10s
+      timeout: 8s
+      retries: 5
 
   mysql:
     image: mysql:8
@@ -28,3 +38,13 @@ services:
       - 3306:3306
     volumes:
       - ./tests/data/mysql/:/docker-entrypoint-initdb.d/:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h $MYSQL_HOST -u$MYSQL_USER -p$MYSQL_PASSWORD --silent",
+        ]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
