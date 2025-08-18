@@ -650,7 +650,7 @@ wheels = [
 
 [[package]]
 name = "pgedr"
-version = "0.1.0"
+version = "0.2.dev0"
 source = { editable = "." }
 dependencies = [
     { name = "cryptography" },
@@ -821,9 +821,9 @@ dependencies = [
     { name = "sqlalchemy" },
     { name = "tinydb" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/61/06/faf4daa3cb5e61508b50e1020bf20d0cd7f6f2aea11d17c719dd21eea2e2/pygeoapi-0.21.0.tar.gz", hash = "sha256:2f5b07af8c6735e8259a468766821c22909e4c00e0c872dea8767d812164fa6a", size = 322051, upload-time = "2025-08-03T15:48:01.598Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/61/06/faf4daa3cb5e61508b50e1020bf20d0cd7f6f2aea11d17c719dd21eea2e2/pygeoapi-0.21.0.tar.gz", hash = "sha256:2f5b07af8c6735e8259a468766821c22909e4c00e0c872dea8767d812164fa6a", size = 322051 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f6/62/0cd4a9fba16340fa791648afc72fc8551bfd83fed84ed14a58725fe5054f/pygeoapi-0.21.0-py2.py3-none-any.whl", hash = "sha256:c2b97676cd5a5742eeb38e9608117de66354028a7309e5b026dd6d9a24f487fc", size = 511152, upload-time = "2025-08-03T15:48:00.257Z" },
+    { url = "https://files.pythonhosted.org/packages/f6/62/0cd4a9fba16340fa791648afc72fc8551bfd83fed84ed14a58725fe5054f/pygeoapi-0.21.0-py2.py3-none-any.whl", hash = "sha256:c2b97676cd5a5742eeb38e9608117de66354028a7309e5b026dd6d9a24f487fc", size = 511152 },
 ]
 
 [[package]]

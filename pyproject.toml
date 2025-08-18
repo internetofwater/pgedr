@@ -13,7 +13,7 @@ where = ["src"]
 
 [project]
 name = "pgedr"
-version = "0.1.0"
+version = "0.2.dev0"
 description = "An OGC API EDR implementation using SQL for pygeoapi"
 authors = [{name = "Benjamin Webb", email = "bwebb@lincolninst.edu"}]
 license = {file = "LICENSE"}

@@ -7,11 +7,6 @@ COPY *.toml *.yml /pgedr/
 COPY src/ /pgedr/src/
 
 RUN pip install -e /pgedr
-RUN apt-get update \
-    && apt-get install -y git \
-    && git clone https://github.com/C-Loftus/pygeoapi.git /tmp \
-    && rm -rf /pygeoapi \
-    && mv -f /tmp/pygeoapi /pygeoapi
 
 ENV PYGEOAPI_CONFIG=/pgedr/pygeoapi.config.yml
 ENV PYGEOAPI_OPENAPI=/pgedr/pygeoapi.openapi.yml
