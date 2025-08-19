@@ -432,8 +432,13 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         :param selections: Columns to select.
         :param filters: Filters to apply if any.
 
-        :returns: A SQl Alchemy select statement.
+        :returns: A SQL Alchemy select statement.
         """
+
+        tables = [selection.table for selection in selections]
+        if len(set(tables)) == 1 and filters == [True]:
+            return select(*selections)
+
         return (
             select(*selections)
             .select_from(self.model)
