@@ -10,9 +10,9 @@ from pg_edr.lib import get_column_from_qualified_name as gqname
 from pg_edr.lib import recursive_getattr as rgetattr
 
 
-@pytest.fixture()
-def config():
-    return {
+@pytest.fixture(params=["tables", "views"])
+def config(request):
+    pygeoapi_config = {
         "name": "MySQLEDRProvider",
         "type": "edr",
         "data": {
@@ -49,6 +49,16 @@ def config():
             },
         },
     }
+
+    if request.param == "tables":
+        return pygeoapi_config
+
+    if request.param == "views":
+        pygeoapi_config["edr_fields"]["parameter_id"] = "airport_parameters.id"
+        pygeoapi_config["edr_fields"]["location_field"] = (
+            "airports.airport_locations.id"
+        )
+        return pygeoapi_config
 
 
 def test_external_table_relationships(config):
@@ -102,9 +112,9 @@ def test_fields(config):
     """Testing query for a valid JSON object with geometry"""
     p = MySQLEDRProvider(config)
 
-    assert len(p.fields) == 1
+    assert len(p.fields) == 2
     for k, v in p.fields.items():
-        assert len(k) == 8
+        assert k in ["landings", "crashes"]
         assert [k_ in ["title", "type", "x-ogc-unit"] for k_ in v]
 
     selected_mappings = {
@@ -127,8 +137,8 @@ def test_locations(config):
     assert len(locations["features"]) == 4
 
     feature = locations["features"][0]
-    assert feature["id"] == "DCA"
-    assert not feature.get("properties")
+    assert feature["id"] == "ADW"
+    assert feature["properties"]["parameters"] == ["crashes", "landings"]
 
 
 def test_locations_with_prop(config):
@@ -142,7 +152,7 @@ def test_locations_with_prop(config):
     assert len(locations["features"]) == 4
 
     feature = locations["features"][0]
-    assert feature["id"] == "DCA"
+    assert feature["id"] == "ADW"
     assert feature.get("properties")
     assert "airline" in feature.get("properties")
 
@@ -175,11 +185,15 @@ def test_locations_select_param(config):
 
     locations = p.locations()
     assert len(locations["features"]) == 4
+    assert len(locations["parameters"]) == 2
+
+    locations = p.locations(select_properties=["crashes"])
+    assert len(locations["features"]) == 3
     assert len(locations["parameters"]) == 1
 
-    locations = p.locations(select_properties=["00010"])
+    locations = p.locations(select_properties=["teleportations"])
     assert len(locations["features"]) == 0
-    assert len(locations["parameters"]) == 1
+    assert len(locations["parameters"]) == 0
 
 
 def test_get_location(config):
