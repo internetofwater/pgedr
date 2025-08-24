@@ -205,7 +205,6 @@ def test_locations_select_param(config):
     p = PostgresEDRProvider(config)
 
     locations = p.locations()
-    print(locations["parameters"])
     assert len(locations["parameters"]) == 7
 
     locations = p.locations(select_properties=["00010"])
@@ -233,7 +232,6 @@ def test_get_location(config):
     assert domain["type"] == "Domain"
     assert domain["domainType"] == "PointSeries"
 
-    print(domain["axes"]["t"])
     assert domain["axes"]["x"]["values"] == [-74.98516031202179]
     assert domain["axes"]["y"]["values"] == [40.05695572943445]
     assert domain["axes"]["t"]["values"] == [

@@ -192,7 +192,6 @@ def test_locations_select_param(config):
     assert len(locations["parameters"]) == 1
 
     locations = p.locations(select_properties=["teleportations"])
-    print(locations)
     assert len(locations["features"]) == 0
     assert len(locations["parameters"]) == 0
 
