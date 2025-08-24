@@ -9,7 +9,7 @@ from geoalchemy2.shape import to_shape
 from shapely.geometry import shape, mapping
 from typing import Optional
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, distinct
 from sqlalchemy.orm import Session, relationship, aliased
 from sqlalchemy.sql.expression import or_
 
@@ -155,38 +155,42 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         parameter_filters = self._get_parameter_filters(select_properties)
         filters = [bbox_filter, parameter_filters, time_filter]
 
+        LOGGER.debug("Preparing response")
+        parameters_names = set()
+        response = {
+            "type": "FeatureCollection",
+            "features": [],
+            "parameters": [],
+            "numberReturned": 0,
+        }
+
+        extraprops = [gqname(self.model, p).label(p) for p in self.properties]
+        params = self._param_agg()
+        location_query = (
+            self._select(self.lc, self.gc, params)
+            .filter(*filters)
+            .group_by(self.lc, self.gc, *extraprops)
+            .add_columns(*extraprops)
+            .limit(limit)
+        )
+
         with Session(self._engine) as session:
-            parameter_query = self._select(
-                self.pic, filters=filters
-            ).distinct()
+            for id, geom, params, *extraprops in session.execute(
+                location_query
+            ):
+                if isinstance(params, str):
+                    params = params.split(",")
 
-            parameters = self._get_parameters(
-                [str(p) for (p,) in session.execute(parameter_query)],
-                aslist=True,
-            )
-
-            LOGGER.debug("Preparing response")
-            response = {
-                "type": "FeatureCollection",
-                "features": [],
-                "parameters": parameters,
-                "numberReturned": 0,
-            }
-
-            extraparams = [
-                gqname(self.model, p).label(p) for p in self.properties
-            ]
-            location_query = (
-                self._select(self.lc, self.gc, *extraparams, filters=filters)
-                .distinct(self.lc)
-                .limit(limit)
-            )
-
-            for id, geom, *extraparams in session.execute(location_query):
                 response["numberReturned"] += 1
                 response["features"].append(
-                    self._sqlalchemy_to_feature(id, geom, extraparams)
+                    self._sqlalchemy_to_feature(id, geom, params, extraprops)
                 )
+                parameters_names.update(params)
+
+        if parameters_names:
+            response["parameters"] = self._get_parameters(
+                parameters_names, aslist=True
+            )
 
         return response
 
@@ -211,70 +215,47 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         """
 
         coverage = empty_coverage()
+        ranges = {}
         domain = coverage["domain"]
-        ranges = coverage["ranges"]
         t_values = domain["axes"]["t"]["values"]
 
         parameter_filters = self._get_parameter_filters(select_properties)
+        select_parameters = set(select_properties or self._get_parameters())
         time_filter = self._get_datetime_filter(datetime_)
         filters = [self.lc == location_id, parameter_filters, time_filter]
 
-        with Session(self._engine) as session:
-            # Get the geometry of the location
-            location_query = self._select(
-                self.gc, filters=[self.lc == location_id]
-            ).limit(1)
+        # Create the main query to fetch data
+        results = (
+            self._select(self.tc, filters=filters)
+            .distinct()
+            .order_by(self.tc.desc())
+            .limit(limit)
+        )
 
-            geom = session.execute(location_query).scalar()
-            try:
-                geom = to_shape(geom)
-            except TypeError:
-                geom = shape(geom)
-
-            domain["domainType"] = geom.geom_type.lstrip("Multi")
-            if geom.geom_type == "Point":
-                domain["axes"].update(
-                    {"x": {"values": [geom.x]}, "y": {"values": [geom.y]}}
-                )
-            else:
-                values = mapping(geom)["coordinates"]
-                values = values if "Multi" in geom.geom_type else [values]
-                domain["axes"]["composite"] = {
-                    "dataType": "polygon",
-                    "coordinates": ["x", "y"],
-                    "values": values,
-                }
-
-            # Add parameters to coverage
-            parameter_query = self._select(
-                self.pic, filters=filters
-            ).distinct()
-            parameters = {str(p) for (p,) in session.execute(parameter_query)}
-            coverage["parameters"] = self._get_parameters(parameters)
-            for p in parameters:
-                ranges[p] = empty_range()
-
-            # Create the main query to fetch data
-            results = (
-                self._select(self.tc, filters=filters)
-                .distinct()
-                .order_by(self.tc.desc())
-                .limit(limit)
+        # Create select columns for each parameter
+        for parameter in select_parameters:
+            filters = [time_filter, self.lc == location_id]
+            parameter_query = (
+                self._select(self.tc, self.rc, filters=filters)
+                .filter(self.pic == parameter)
+                .subquery()
             )
+            model = aliased(self.model, parameter_query)
+            rc = getattr(model, self.result_field).label(parameter)
+            tc = getattr(model, self.time_field)
+            ranges[parameter] = empty_range()
+            results = results.join(
+                model, self.tc == tc, isouter=True
+            ).add_columns(rc)
 
-            # Create select columns for each parameter
-            for parameter in parameters:
-                parameter_query = (
-                    self._select(self.tc, self.rc, filters=filters)
-                    .filter(self.pic == parameter)
-                    .subquery()
-                )
-                model = aliased(self.model, parameter_query)
-                rc = getattr(model, self.result_field).label(parameter)
-                tc = getattr(model, self.time_field)
-                results = results.join(model, self.tc == tc).add_columns(rc)
+        # Get the geometry of the location
+        location_query = self._select(
+            self.gc, filters=[self.lc == location_id]
+        ).limit(1)
 
+        with Session(self._engine) as session:
             # Construct the query
+            parameter_names = set()
             for row in session.execute(results):
                 row = row._asdict()
 
@@ -283,15 +264,43 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
 
                 # Add parameter values to ranges
                 for pname, value in row.items():
+                    if value is not None:
+                        parameter_names.add(pname)
+
                     ranges[pname]["values"].append(value)
                     ranges[pname]["shape"][0] += 1
+
+            geom = session.execute(location_query).scalar()
+            try:
+                geom = to_shape(geom)
+            except TypeError:
+                geom = shape(geom)
+
+        domain["domainType"] = geom.geom_type.lstrip("Multi")
+        if geom.geom_type == "Point":
+            domain["axes"].update(
+                {"x": {"values": [geom.x]}, "y": {"values": [geom.y]}}
+            )
+        else:
+            values = mapping(geom)["coordinates"]
+            values = values if "Multi" in geom.geom_type else [values]
+            domain["axes"]["composite"] = {
+                "dataType": "polygon",
+                "coordinates": ["x", "y"],
+                "values": values,
+            }
 
         if len(t_values) > 1:
             domain["domainType"] += "Series"
 
+        coverage["parameters"] = self._get_parameters(parameter_names)
+        coverage["ranges"] = {
+            k: ranges[k] for k in ranges if k in parameter_names
+        }
+
         return coverage
 
-    def _sqlalchemy_to_feature(self, id, wkb_geom, properties=[]):
+    def _sqlalchemy_to_feature(self, id, wkb_geom, params, properties=[]):
         """
         Create GeoJSON of location.
 
@@ -305,13 +314,14 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         feature = {
             "type": "Feature",
             "id": id,
+            "properties": {"parameters": params},
         }
 
         if properties:
             cleaned_properties = [p.split(".").pop() for p in self.properties]
-            feature["properties"] = {
-                k: v for (k, v) in zip(cleaned_properties, properties)
-            }
+            feature["properties"].update(
+                {k: v for (k, v) in zip(cleaned_properties, properties)}
+            )
 
         # Convert geometry to GeoJSON style
         try:
@@ -435,8 +445,8 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         :returns: A SQL Alchemy select statement.
         """
 
-        tables = [selection.table for selection in selections]
-        if len(set(tables)) == 1 and filters == [True]:
+        tables = set([selection.table for selection in selections])
+        if len(tables) == 1 and all(filters):
             return select(*selections)
 
         return (
@@ -507,6 +517,12 @@ class PostgresEDRProvider(EDRProvider):
         # We implement this method inside of the feature provider
         pass
 
+    def _param_agg(self):
+        """
+        Create the aggregation function for parameters
+        """
+        return func.array_agg(distinct(self.pic)).label("parameters")
+
 
 class MySQLEDRProvider(EDRProvider):
     """
@@ -568,3 +584,9 @@ class MySQLEDRProvider(EDRProvider):
         # This method is empty due to the way pygeoapi handles items requests
         # We implement this method inside of the feature provider
         pass
+
+    def _param_agg(self):
+        """
+        Create the aggregation function for parameters
+        """
+        return func.GROUP_CONCAT(distinct(self.pic)).label("parameters")

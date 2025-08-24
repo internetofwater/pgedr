@@ -59,7 +59,8 @@ INSERT INTO airport_locations (id, label, geometry_wkt) VALUES
 
 -- Define a parameter: number of landings
 INSERT INTO airport_parameters (id, name, units, description) VALUES
-('landings', 'Daily plane landings', 'count', 'Number of planes landed');
+('landings', 'Daily plane landings', 'count', 'Number of planes landed'),
+('crashes', 'Daily plane crashes', 'count', 'Number of plane crashes');
 
 -- Landing observations grouped by airport and airline
 INSERT INTO landing_observations (location_id, time, parameter_id, value, airline) VALUES
@@ -71,8 +72,13 @@ INSERT INTO landing_observations (location_id, time, parameter_id, value, airlin
 ('IAD', '2025-05-01', 'landings', 200, 'United Airlines'),
 ('IAD', '2025-05-02', 'landings', 50, 'United Airlines'),
 ('IAD', '2025-05-03', 'landings', 303, 'United Airlines'),
-('ADW', '2025-04-03', 'landings', 2, 'Air Force One'),
-('ADW', '2025-04-04', 'landings', 3, 'Air Force One'),
+('IAD', '2025-05-01', 'crashes', 0, 'United Airlines'),
+('IAD', '2025-05-02', 'crashes', 0, 'United Airlines'),
 ('BWI', '2025-05-01', 'landings', 41, 'Southwest Airlines'),
 ('BWI', '2025-05-02', 'landings', 40, 'Southwest Airlines'),
-('BWI', '2025-05-03', 'landings', 40, 'Southwest Airlines');
+('BWI', '2025-05-03', 'landings', 40, 'Southwest Airlines'),
+('BWI', '2025-05-01', 'crashes', 2, 'Southwest Airlines'),
+('BWI', '2025-05-02', 'crashes', 9, 'Southwest Airlines'),
+('ADW', '2025-04-03', 'landings', 2, 'Air Force One'),
+('ADW', '2025-04-04', 'landings', 3, 'Air Force One'),
+('ADW', '2025-04-04', 'crashes', 1, 'Air Force One');

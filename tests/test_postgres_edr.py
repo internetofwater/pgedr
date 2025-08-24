@@ -158,7 +158,7 @@ def test_locations(config):
 
     feature = locations["features"][0]
     assert feature["id"] == "USGS-01465798"
-    assert not feature.get("properties")
+    assert feature["properties"]["parameters"] == ["00060"]
 
 
 def test_locations_with_prop(config):
