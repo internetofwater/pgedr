@@ -117,8 +117,6 @@ resources:
           parameter_id: parameter_code
           parameter_name: waterservices_timeseries_metadata.parameter_name
           parameter_unit: unit_of_measure
-        properties:
-          -
         external_tables:
           waterservices_timeseries_metadata:
             foreign: parameter_code

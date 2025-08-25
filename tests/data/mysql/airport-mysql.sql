@@ -80,5 +80,5 @@ INSERT INTO landing_observations (location_id, time, parameter_id, value, airlin
 ('BWI', '2025-05-01', 'crashes', 2, 'Southwest Airlines'),
 ('BWI', '2025-05-02', 'crashes', 9, 'Southwest Airlines'),
 ('ADW', '2025-04-03', 'landings', 2, 'Air Force One'),
-('ADW', '2025-04-04', 'landings', 3, 'Air Force One'),
-('ADW', '2025-04-04', 'crashes', 1, 'Air Force One');
+('ADW', '2025-04-04', 'crashes', 1, 'Air Force One'),
+('ADW', '2025-04-04', 'landings', 3, 'Air Force One');

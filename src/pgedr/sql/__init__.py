@@ -5,8 +5,6 @@ import logging
 
 from geoalchemy2 import Geometry  # noqa - this isn't used explicitly but is needed to process Geometry columns
 from geoalchemy2.functions import ST_MakeEnvelope
-from geoalchemy2.shape import to_shape
-from shapely.geometry import shape, mapping
 from typing import Optional
 
 from sqlalchemy import func, select, distinct
@@ -16,7 +14,12 @@ from sqlalchemy.sql.expression import or_
 from pygeoapi.provider.base_edr import BaseEDRProvider
 from pygeoapi.provider.sql import GenericSQLProvider
 
-from pgedr.lib import empty_coverage, empty_range
+from pgedr.lib import (
+    empty_coverage,
+    empty_range,
+    apply_domain_geometry,
+    read_geom,
+)
 from pgedr.sql.lib import get_base_schema
 from pgedr.sql.lib import get_column_from_qualified_name as gqname
 
@@ -62,7 +65,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         LOGGER.debug("Adding external tables")
         self.external_tables = provider_def.get("external_tables", {})
         external_tables = [
-            table.split(".")[-1] for table in self.external_tables
+            table.split(".").pop() for table in self.external_tables
         ]
         self.table_models = (self.table, *external_tables)
 
@@ -255,6 +258,9 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         ).limit(1)
 
         with Session(self._engine) as session:
+            geom = session.execute(location_query).scalar()
+            apply_domain_geometry(domain, geom)
+
             # Construct the query
             parameter_names = set()
             for row in session.execute(results):
@@ -270,26 +276,6 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
 
                     ranges[pname]["values"].append(value)
                     ranges[pname]["shape"][0] += 1
-
-            geom = session.execute(location_query).scalar()
-            try:
-                geom = to_shape(geom)
-            except TypeError:
-                geom = shape(geom)
-
-        domain["domainType"] = geom.geom_type.lstrip("Multi")
-        if geom.geom_type == "Point":
-            domain["axes"].update(
-                {"x": {"values": [geom.x]}, "y": {"values": [geom.y]}}
-            )
-        else:
-            values = mapping(geom)["coordinates"]
-            values = values if "Multi" in geom.geom_type else [values]
-            domain["axes"]["composite"] = {
-                "dataType": "polygon",
-                "coordinates": ["x", "y"],
-                "values": values,
-            }
 
         if len(t_values) > 1:
             domain["domainType"] += "Series"
@@ -316,6 +302,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
             "type": "Feature",
             "id": id,
             "properties": {"parameters": params},
+            "geometry": read_geom(wkb_geom, as_geojson=True),
         }
 
         if properties:
@@ -323,15 +310,6 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
             feature["properties"].update(
                 {k: v for (k, v) in zip(cleaned_properties, properties)}
             )
-
-        # Convert geometry to GeoJSON style
-        try:
-            shapely_geom = to_shape(wkb_geom)
-        except TypeError:
-            shapely_geom = shape(wkb_geom)
-
-        geojson_geom = mapping(shapely_geom)
-        feature["geometry"] = geojson_geom
 
         return feature
 
