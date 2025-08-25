@@ -16,8 +16,9 @@ from sqlalchemy.sql.expression import or_
 from pygeoapi.provider.base_edr import BaseEDRProvider
 from pygeoapi.provider.sql import GenericSQLProvider
 
-from pg_edr.lib import get_base_schema, empty_coverage, empty_range
-from pg_edr.lib import get_column_from_qualified_name as gqname
+from pgedr.lib import empty_coverage, empty_range
+from pgedr.sql.lib import get_base_schema
+from pgedr.sql.lib import get_column_from_qualified_name as gqname
 
 LOGGER = logging.getLogger(__name__)
 

@@ -100,7 +100,7 @@ resources:
         end: null
     providers:
       - type: edr
-        name: pg_edr.edr.PostgresEDRProvider
+        name: pgedr.PostgresEDRProvider
         data:
           host: ${POSTGRES_HOST}
           dbname: ${POSTGRES_DB}
@@ -117,6 +117,8 @@ resources:
           parameter_id: parameter_code
           parameter_name: waterservices_timeseries_metadata.parameter_name
           parameter_unit: unit_of_measure
+        properties:
+          -
         external_tables:
           waterservices_timeseries_metadata:
             foreign: parameter_code
@@ -153,7 +155,7 @@ resources:
         end: null
     providers:
       - type: edr
-        name: pg_edr.edr.MySQLEDRProvider
+        name: pgedr.MySQLEDRProvider
         data:
           host: ${MYSQL_HOST}
           dbname: ${MYSQL_DATABASE}

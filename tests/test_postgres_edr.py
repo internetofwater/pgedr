@@ -7,9 +7,9 @@ import pytest
 
 from pygeoapi.provider.base import ProviderInvalidDataError
 
-from pg_edr.edr import PostgresEDRProvider
-from pg_edr.lib import get_column_from_qualified_name as gqname
-from pg_edr.lib import recursive_getattr as rgetattr
+from pgedr import PostgresEDRProvider
+from pgedr.sql.lib import get_column_from_qualified_name as gqname
+from pgedr.sql.lib import recursive_getattr as rgetattr
 
 
 @pytest.fixture(params=["tables", "views"])

@@ -17,7 +17,7 @@ The configuration for Postgres EDR is as follows:
 
 ```yaml
 - type: edr
-  name: pg_edr.edr.PostgresEDRProvider
+  name: pgedr.edr.PostgresEDRProvider
   data: # Same as PostgresSQLProvider
     host: ${POSTGRES_HOST}
     dbname: ${POSTGRES_DB}
@@ -48,7 +48,7 @@ The configuration for MySQL EDR is as follows:
 
 ```yaml
 - type: edr
-  name: pg_edr.edr.MySQLEDRProvider
+  name: pgedr.MySQLEDRProvider
   data: # Same as MySQLProvider
     host: ${MYSQL_HOST}
     port: ${MYSQL_PORT}
