@@ -425,7 +425,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         """
 
         tables = set([selection.table for selection in selections])
-        if len(tables) == 1 and all(filters):
+        if len(tables) == 1 and all(f is True for f in filters):
             return select(*selections)
 
         return (
