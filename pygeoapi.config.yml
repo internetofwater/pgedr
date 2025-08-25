@@ -100,7 +100,7 @@ resources:
         end: null
     providers:
       - type: edr
-        name: pg_edr.edr.PostgresEDRProvider
+        name: pgedr.PostgresEDRProvider
         data:
           host: ${POSTGRES_HOST}
           dbname: ${POSTGRES_DB}
@@ -153,7 +153,7 @@ resources:
         end: null
     providers:
       - type: edr
-        name: pg_edr.edr.MySQLEDRProvider
+        name: pgedr.MySQLEDRProvider
         data:
           host: ${MYSQL_HOST}
           dbname: ${MYSQL_DATABASE}

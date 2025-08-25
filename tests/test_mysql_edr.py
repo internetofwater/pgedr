@@ -5,9 +5,9 @@ from sqlalchemy.orm import Session, InstrumentedAttribute
 import datetime
 import pytest
 
-from pg_edr.edr import MySQLEDRProvider
-from pg_edr.lib import get_column_from_qualified_name as gqname
-from pg_edr.lib import recursive_getattr as rgetattr
+from pgedr import MySQLEDRProvider
+from pgedr.sql.lib import get_column_from_qualified_name as gqname
+from pgedr.sql.lib import recursive_getattr as rgetattr
 
 
 @pytest.fixture(params=["tables", "views"])
