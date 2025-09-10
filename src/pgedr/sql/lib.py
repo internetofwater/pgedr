@@ -3,7 +3,7 @@
 
 import functools
 import logging
-from typing import Any
+from typing import Any, Optional
 
 from sqlalchemy import MetaData, PrimaryKeyConstraint
 from sqlalchemy.exc import OperationalError
@@ -54,8 +54,8 @@ def get_column_from_qualified_name(model: Any, path: str) -> Any:
 
 @functools.cache
 def get_base_schema(
-    tables: tuple[str], schema: str, engine, id_column: str = None
-):
+    tables: tuple[str], schema: str, engine, id_column: Optional[str] = None
+) -> Any:
     """Function used when automapping classes and relationships from
     database schema.
     """

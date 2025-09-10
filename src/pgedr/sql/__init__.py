@@ -130,10 +130,10 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
 
     def locations(
         self,
-        location_id: str = None,
+        location_id: Optional[str] = None,
         select_properties: list = [],
         bbox: list = [],
-        datetime_: str = None,
+        datetime_: Optional[str] = None,
         limit: int = 100,
         **kwargs,
     ):
@@ -202,7 +202,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         self,
         location_id: str,
         select_properties: list = [],
-        datetime_: str = None,
+        datetime_: Optional[str] = None,
         limit: int = 100,
         **kwargs,
     ):
