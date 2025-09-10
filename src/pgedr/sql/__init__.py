@@ -26,7 +26,7 @@ from pgedr.sql.lib import get_column_from_qualified_name as gqname
 LOGGER = logging.getLogger(__name__)
 
 
-class EDRProvider(BaseEDRProvider, GenericSQLProvider):
+class EDRProvider(BaseEDRProvider, GenericSQLProvider): # pyright: ignore[reportIncompatibleMethodOverride] we ignore this since we are overriding a class with a query method that is not typed correctly
     """
     Generic provider for SQL EDR based on psycopg2
     using sync approach and server side
@@ -169,6 +169,9 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         }
 
         extraprops = [gqname(self.model, p).label(p) for p in self.properties]
+        if not isinstance(self, (PostgresEDRProvider, MySQLEDRProvider)):
+            raise ValueError("This provider does not support param aggregation")
+        
         params = self._param_agg()
         location_query = (
             self._select(self.lc, self.gc, params)
@@ -221,10 +224,10 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         coverage = empty_coverage()
         ranges = {}
         domain = coverage["domain"]
-        t_values = domain["axes"]["t"]["values"]
+        t_values: list = domain["axes"]["t"]["values"]
 
         parameter_filters = self._get_parameter_filters(select_properties)
-        select_parameters = set(select_properties or self._get_parameters())
+        select_parameters = set(select_properties or self._get_parameters(set()))
         time_filter = self._get_datetime_filter(datetime_)
         filters = [self.lc == location_id, parameter_filters, time_filter]
 
@@ -287,7 +290,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
 
         return coverage
 
-    def _sqlalchemy_to_feature(self, id, wkb_geom, params, properties=[]):
+    def _sqlalchemy_to_feature(self, id: str, wkb_geom, params, properties=[]): # type: ignore We have to ignore this for now since the underlying function is inherited and harder to fix
         """
         Create GeoJSON of location.
 
@@ -328,7 +331,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         filter_group = [self.pic == value for value in parameters]
         return or_(*filter_group)
 
-    def _get_parameters(self, parameters: set = {}, aslist=False):
+    def _get_parameters(self, parameters: set, aslist=False):
         """
         Generate parameters
 
@@ -338,7 +341,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         :returns: A dictionary containing the parameter definition.
         """
         if not parameters:
-            parameters = self.fields.keys()
+            parameters = set(self.fields.keys())
 
         out_params = {}
         for param in set(parameters):
@@ -397,7 +400,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
 
         return tuple(allowed)
 
-    def _get_datetime_filter(self, datetime_):
+    def _get_datetime_filter(self, datetime_: Optional[str]):
         if datetime_ in (None, "../.."):
             return True
         else:
@@ -431,7 +434,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         return (
             select(*selections)
             .select_from(self.model)
-            .with_joins(self.joins)
+            .with_joins(self.joins) # type: ignore since we are monkeypatching this
             .filter(*filters)
         )
 

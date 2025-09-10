@@ -26,8 +26,6 @@ dependencies = [
     "pydantic",
     "pygeoapi>=0.21.0",
     "pymysql>=1.1.1",
-    "pytest",
-    "pytest-cov"
 ]
 keywords = ['pygeoapi', 'edr', 'data']
 
@@ -47,6 +45,13 @@ classifiers=[   # see https://pypi.org/classifiers/
 [project.urls]
 Homepage = "https://github.com/internetofwater/pgedr"
 Repository = "https://github.com/internetofwater/pgedr"
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.405",
+    "pytest>=8.4.2",
+    "pytest-cov>=7.0.0",
+]
 
 [tool.pytest.ini_options]
 addopts = "--cov=pgedr"

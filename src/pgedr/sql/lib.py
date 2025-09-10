@@ -125,4 +125,4 @@ def with_joins(query, joins, **kw):
     return query
 
 
-Select.with_joins = with_joins
+Select.with_joins = with_joins # type: ignore since we are monkeypatching

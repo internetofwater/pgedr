@@ -23,7 +23,7 @@ TEMPORAL_RS = {
 }
 
 
-def empty_coverage() -> dict[str, Any]:
+def empty_coverage():
     """
     Return empty Coverage dictionary.
     """
@@ -39,7 +39,7 @@ def empty_coverage() -> dict[str, Any]:
     }
 
 
-def empty_coverage_collection() -> dict[str, Any]:
+def empty_coverage_collection():
     """
     Return empty Coverage Collection dictionary.
     """
@@ -52,7 +52,7 @@ def empty_coverage_collection() -> dict[str, Any]:
     }
 
 
-def empty_range() -> dict[str, Any]:
+def empty_range():
     """
     Return empty Range dictionary.
     """
