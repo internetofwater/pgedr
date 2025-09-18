@@ -1,0 +1,1 @@
+This directory contains sql schemas and data for testing the Postgres EDR provider. The sql files are loaded in alphabetic order, thus if you wish to extend this, you can put new views in the same directory with a leading `z` to make them load last.
