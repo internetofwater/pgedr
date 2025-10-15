@@ -1,10 +1,10 @@
 -- Sample locations
 INSERT INTO edr_quickstart.locations 
-    (name, description, region, properties, last_modified, created, geometry)
+    (name, description, properties, geometry)
 VALUES
-('Central Park', 'Urban park in NYC', 'New York', '{"type":"park","area_ha":341}', NOW(), NOW(), ST_SetSRID(ST_Point(-73.9654, 40.7829), 4326)),
-('Golden Gate Bridge', 'Famous suspension bridge', 'California', '{"type":"bridge","length_m":2737}', NOW(), NOW(), ST_SetSRID(ST_Point(-122.4783, 37.8199), 4326)),
-('Millennium Park', 'Park with Cloud Gate sculpture', 'Illinois', '{"type":"park","area_ha":25}', NOW(), NOW(), ST_SetSRID(ST_Point(-87.6226, 41.8826), 4326));
+('Central Park', 'Urban park in NYC', '{"type":"park","area_ha":341}', ST_SetSRID(ST_Point(-73.9654, 40.7829), 4326)),
+('Golden Gate Bridge', 'Famous suspension bridge', '{"type":"bridge","length_m":2737}', ST_SetSRID(ST_Point(-122.4783, 37.8199), 4326)),
+('Millennium Park', 'Park with Cloud Gate sculpture', '{"type":"park","area_ha":25}', ST_SetSRID(ST_Point(-87.6226, 41.8826), 4326));
 
 -- Sample parameters
 INSERT INTO edr_quickstart.parameters 
@@ -32,3 +32,7 @@ VALUES
 (3, 'TEMP', 25.0, '2025-09-10 09:00:00+00'::timestamptz),
 (3, 'AQI', 35, '2025-09-10 09:00:00+00'::timestamptz),
 (3, 'HUM', 60, '2025-09-10 09:00:00+00'::timestamptz);
+<<<<<<< HEAD
+=======
+
+>>>>>>> 26faad1bd3acac1a781dcb80f64b0b46dfd853dc
