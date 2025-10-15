@@ -20,3 +20,6 @@ clean:
 
 test:
 	uv run pyright && uv run pytest
+
+check:
+	uv run pyright && uv run ruff check

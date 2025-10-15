@@ -10,16 +10,16 @@ from shapely.geometry import shape, mapping
 LOGGER = logging.getLogger(__name__)
 
 GEOGRAPHIC_CRS = {
-    "coordinates": ["x", "y"],
-    "system": {
-        "type": "GeographicCRS",
-        "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
+    'coordinates': ['x', 'y'],
+    'system': {
+        'type': 'GeographicCRS',
+        'id': 'http://www.opengis.net/def/crs/OGC/1.3/CRS84',
     },
 }
 
 TEMPORAL_RS = {
-    "coordinates": ["t"],
-    "system": {"type": "TemporalRS", "calendar": "Gregorian"},
+    'coordinates': ['t'],
+    'system': {'type': 'TemporalRS', 'calendar': 'Gregorian'},
 }
 
 
@@ -28,14 +28,14 @@ def empty_coverage():
     Return empty Coverage dictionary.
     """
     return {
-        "type": "Coverage",
-        "domain": {
-            "type": "Domain",
-            "domainType": "",
-            "axes": {"t": {"values": []}},
-            "referencing": [GEOGRAPHIC_CRS, TEMPORAL_RS],
+        'type': 'Coverage',
+        'domain': {
+            'type': 'Domain',
+            'domainType': '',
+            'axes': {'t': {'values': []}},
+            'referencing': [GEOGRAPHIC_CRS, TEMPORAL_RS],
         },
-        "ranges": {},
+        'ranges': {},
     }
 
 
@@ -44,11 +44,11 @@ def empty_coverage_collection():
     Return empty Coverage Collection dictionary.
     """
     return {
-        "type": "CoverageCollection",
-        "domainType": "Point",
-        "referencing": [GEOGRAPHIC_CRS, TEMPORAL_RS],
-        "parameters": [],
-        "coverages": [],
+        'type': 'CoverageCollection',
+        'domainType': 'Point',
+        'referencing': [GEOGRAPHIC_CRS, TEMPORAL_RS],
+        'parameters': [],
+        'coverages': [],
     }
 
 
@@ -57,11 +57,11 @@ def empty_range():
     Return empty Range dictionary.
     """
     return {
-        "type": "NdArray",
-        "dataType": "float",
-        "axisNames": ["t"],
-        "shape": [0],
-        "values": [],
+        'type': 'NdArray',
+        'dataType': 'float',
+        'axisNames': ['t'],
+        'shape': [0],
+        'values': [],
     }
 
 
@@ -97,16 +97,16 @@ def apply_domain_geometry(domain: dict[str, Any], geom: Any) -> None:
     :param geom: Shapely geometry object
     """
     geom = read_geom(geom)
-    domain["domainType"] = geom.geom_type.lstrip("Multi")
-    if geom.geom_type == "Point":
-        domain["axes"].update(
-            {"x": {"values": [geom.x]}, "y": {"values": [geom.y]}}
+    domain['domainType'] = geom.geom_type.lstrip('Multi')
+    if geom.geom_type == 'Point':
+        domain['axes'].update(
+            {'x': {'values': [geom.x]}, 'y': {'values': [geom.y]}}
         )
     else:
-        values = mapping(geom)["coordinates"]
-        values = values if "Multi" in geom.geom_type else [values]
-        domain["axes"]["composite"] = {
-            "dataType": "polygon",
-            "coordinates": ["x", "y"],
-            "values": values,
+        values = mapping(geom)['coordinates']
+        values = values if 'Multi' in geom.geom_type else [values]
+        domain['axes']['composite'] = {
+            'dataType': 'polygon',
+            'coordinates': ['x', 'y'],
+            'values': values,
         }

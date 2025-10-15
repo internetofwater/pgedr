@@ -24,7 +24,7 @@ def recursive_getattr(obj: Any, attr: str) -> Any:
     Recursively traverse an object's attributes single dot
     notation and return the final node.
     """
-    for part in attr.split("."):
+    for part in attr.split('.'):
         obj = getattr(obj, part)
     return obj
 
@@ -35,13 +35,13 @@ def get_column_from_qualified_name(model: Any, path: str) -> Any:
     Supports relationships and backrefs.
     """
     # Check if there are more tables to hop
-    parts = path.split(".", 1)
+    parts = path.split('.', 1)
 
     try:
         attr = getattr(model, parts[0])
     except AttributeError:
         raise ProviderInvalidDataError(
-            f"Attribute {parts[0]!r} not found in model {model.__name__!r}."
+            f'Attribute {parts[0]!r} not found in model {model.__name__!r}.'
         )
 
     if len(parts) == 1:
@@ -71,7 +71,7 @@ def get_base_schema(
         )
     except OperationalError:
         raise ProviderConnectionError(
-            f"Could not connect to {repr(engine.url)} (password hidden)."
+            f'Could not connect to {repr(engine.url)} (password hidden).'
         )
 
     # Add primary keys to views before automap
@@ -91,7 +91,7 @@ def get_base_schema(
             pk_constraint = PrimaryKeyConstraint(pk_col.name)
             table.append_constraint(pk_constraint)
 
-            LOGGER.debug(f"Added primary key to {table_name}: {pk_col.name}")
+            LOGGER.debug(f'Added primary key to {table_name}: {pk_col.name}')
 
     _Base = automap_base(metadata=metadata)
     _Base.prepare(
@@ -109,10 +109,10 @@ def _name_for_scalar_relationship(
     name = referred_cls.__name__.lower()
     local_table = local_cls.__table__
     if name in local_table.columns:
-        newname = name + "_"
+        newname = name + '_'
         LOGGER.debug(
-            f"Already detected column name {name!r} in table "
-            f"{local_table!r}. Using {newname!r} for relationship name."
+            f'Already detected column name {name!r} in table '
+            f'{local_table!r}. Using {newname!r} for relationship name.'
         )
         return newname
     return name
@@ -125,4 +125,4 @@ def with_joins(query, joins, **kw):
     return query
 
 
-Select.with_joins = with_joins # type: ignore since we are monkeypatching
+Select.with_joins = with_joins  # type: ignore since we are monkeypatching
