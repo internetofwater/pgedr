@@ -32,7 +32,3 @@ VALUES
 (3, 'TEMP', 25.0, '2025-09-10 09:00:00+00'::timestamptz),
 (3, 'AQI', 35, '2025-09-10 09:00:00+00'::timestamptz),
 (3, 'HUM', 60, '2025-09-10 09:00:00+00'::timestamptz);
-<<<<<<< HEAD
-=======
-
->>>>>>> 26faad1bd3acac1a781dcb80f64b0b46dfd853dc
