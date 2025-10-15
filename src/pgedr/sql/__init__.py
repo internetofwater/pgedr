@@ -26,6 +26,7 @@ from pgedr.sql.lib import get_column_from_qualified_name as gqname
 LOGGER = logging.getLogger(__name__)
 
 
+# flake8: noqa E501
 class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[reportIncompatibleMethodOverride] we ignore this since we are overriding a class with a query method that is not typed correctly
     """
     Generic provider for SQL EDR based on psycopg2
