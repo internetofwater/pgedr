@@ -1,0 +1,757 @@
+@prefix rr: <http://www.w3.org/ns/r2rml#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix obda: <https://w3id.org/obda/vocabulary#> .
+
+<urn:r2rml:MAPPING-ID1> a rr:TriplesMap;
+  rr:predicateObjectMap [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_timeseries_metadata#begin>;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:column "begin";
+          rr:datatype xsd:dateTime;
+          rr:termType rr:Literal
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_timeseries_metadata#last_modified>;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:column "last_modified";
+          rr:termType rr:Literal;
+          rr:datatype xsd:dateTime
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:column "statistic_id";
+          rr:datatype xsd:string;
+          rr:termType rr:Literal
+        ];
+      rr:predicate <https://geoconnex.us/waterservices_timeseries_metadata#statistic_id>
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_timeseries_metadata#parameter_code>;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:termType rr:Literal;
+          rr:column "parameter_code";
+          rr:datatype xsd:string
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_timeseries_metadata#parameter_name>;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:termType rr:Literal;
+          rr:datatype xsd:string;
+          rr:column "parameter_name"
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:termType rr:Literal;
+          rr:column "monitoring_location_id";
+          rr:datatype xsd:string
+        ];
+      rr:predicate <https://geoconnex.us/waterservices_timeseries_metadata#monitoring_location_id>
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_timeseries_metadata#primary>;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:column "primary";
+          rr:datatype xsd:string;
+          rr:termType rr:Literal
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:column "sublocation_identifier";
+          rr:datatype xsd:string;
+          rr:termType rr:Literal
+        ];
+      rr:predicate <https://geoconnex.us/waterservices_timeseries_metadata#sublocation_identifier>
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_timeseries_metadata#thresholds>;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:datatype xsd:string;
+          rr:termType rr:Literal;
+          rr:column "thresholds"
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_timeseries_metadata#computation_identifier>;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:column "computation_identifier";
+          rr:termType rr:Literal;
+          rr:datatype xsd:string
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_timeseries_metadata#computation_period_identifier>;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:column "computation_period_identifier";
+          rr:datatype xsd:string;
+          rr:termType rr:Literal
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_timeseries_metadata#end>;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:termType rr:Literal;
+          rr:datatype xsd:dateTime;
+          rr:column "end"
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:column "geometry";
+          rr:termType rr:Literal;
+          rr:datatype xsd:string
+        ];
+      rr:predicate <https://geoconnex.us/waterservices_timeseries_metadata#geometry>
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:datatype xsd:string;
+          rr:column "id";
+          rr:termType rr:Literal
+        ];
+      rr:predicate <https://geoconnex.us/waterservices_timeseries_metadata#id>
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_timeseries_metadata#unit_of_measure>;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:termType rr:Literal;
+          rr:column "unit_of_measure";
+          rr:datatype xsd:string
+        ]
+    ];
+  rr:subjectMap [ a rr:TermMap, rr:SubjectMap;
+      rr:class <https://geoconnex.us/waterservices_timeseries_metadata>;
+      rr:template "https://geoconnex.us/waterservices_timeseries_metadata/id={id}";
+      rr:termType rr:IRI
+    ];
+  rr:logicalTable [ a rr:R2RMLView;
+      rr:sqlQuery "SELECT * FROM \"capture\".\"waterservices_timeseries_metadata\""
+    ] .
+
+<urn:r2rml:MAPPING-ID2> a rr:TriplesMap;
+  rr:subjectMap [ a rr:TermMap, rr:SubjectMap;
+      rr:class <https://geoconnex.us/waterservices_timeseries_metadata_vw>;
+      rr:termType rr:BlankNode;
+      rr:template "ontop-bnode-1{id}/{unit_of_measure}/{parameter_name}/{parameter_code}/{statistic_id}/{last_modified}/{begin}/{end}/{computation_period_identifier}/{computation_identifier}/{thresholds}/{sublocation_identifier}/{primary}/{monitoring_location_id}/{geometry}"
+    ];
+  rr:predicateObjectMap [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:column "last_modified";
+          rr:datatype xsd:dateTime;
+          rr:termType rr:Literal
+        ];
+      rr:predicate <https://geoconnex.us/waterservices_timeseries_metadata_vw#last_modified>
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_timeseries_metadata_vw#statistic_id>;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:column "statistic_id";
+          rr:datatype xsd:string;
+          rr:termType rr:Literal
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_timeseries_metadata_vw#parameter_code>;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:datatype xsd:string;
+          rr:termType rr:Literal;
+          rr:column "parameter_code"
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:datatype xsd:string;
+          rr:termType rr:Literal;
+          rr:column "parameter_name"
+        ];
+      rr:predicate <https://geoconnex.us/waterservices_timeseries_metadata_vw#parameter_name>
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:column "unit_of_measure";
+          rr:termType rr:Literal;
+          rr:datatype xsd:string
+        ];
+      rr:predicate <https://geoconnex.us/waterservices_timeseries_metadata_vw#unit_of_measure>
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_timeseries_metadata_vw#id>;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:termType rr:Literal;
+          rr:column "id";
+          rr:datatype xsd:string
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_timeseries_metadata_vw#primary>;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:column "primary";
+          rr:datatype xsd:string;
+          rr:termType rr:Literal
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_timeseries_metadata_vw#sublocation_identifier>;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:column "sublocation_identifier";
+          rr:termType rr:Literal;
+          rr:datatype xsd:string
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:termType rr:Literal;
+          rr:datatype xsd:string;
+          rr:column "thresholds"
+        ];
+      rr:predicate <https://geoconnex.us/waterservices_timeseries_metadata_vw#thresholds>
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:termType rr:Literal;
+          rr:datatype xsd:string;
+          rr:column "computation_identifier"
+        ];
+      rr:predicate <https://geoconnex.us/waterservices_timeseries_metadata_vw#computation_identifier>
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:termType rr:Literal;
+          rr:column "begin";
+          rr:datatype xsd:dateTime
+        ];
+      rr:predicate <https://geoconnex.us/waterservices_timeseries_metadata_vw#begin>
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_timeseries_metadata_vw#computation_period_identifier>;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:termType rr:Literal;
+          rr:datatype xsd:string;
+          rr:column "computation_period_identifier"
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_timeseries_metadata_vw#end>;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:column "end";
+          rr:datatype xsd:dateTime;
+          rr:termType rr:Literal
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:datatype xsd:string;
+          rr:termType rr:Literal;
+          rr:column "monitoring_location_id"
+        ];
+      rr:predicate <https://geoconnex.us/waterservices_timeseries_metadata_vw#monitoring_location_id>
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:termType rr:Literal;
+          rr:datatype xsd:string;
+          rr:column "geometry"
+        ];
+      rr:predicate <https://geoconnex.us/waterservices_timeseries_metadata_vw#geometry>
+    ];
+  rr:logicalTable [ a rr:R2RMLView;
+      rr:sqlQuery "SELECT * FROM \"capture\".\"waterservices_timeseries_metadata_vw\""
+    ] .
+
+<urn:r2rml:MAPPING-ID3> a rr:TriplesMap;
+  rr:predicateObjectMap [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/geography_columns#type>;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:column "type";
+          rr:datatype xsd:string;
+          rr:termType rr:Literal
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/geography_columns#coord_dimension>;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:column "coord_dimension";
+          rr:termType rr:Literal;
+          rr:datatype xsd:integer
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:datatype xsd:integer;
+          rr:column "srid";
+          rr:termType rr:Literal
+        ];
+      rr:predicate <https://geoconnex.us/geography_columns#srid>
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:termType rr:Literal;
+          rr:column "f_geography_column";
+          rr:datatype xsd:string
+        ];
+      rr:predicate <https://geoconnex.us/geography_columns#f_geography_column>
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/geography_columns#f_table_catalog>;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:column "f_table_catalog";
+          rr:datatype xsd:string;
+          rr:termType rr:Literal
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:termType rr:Literal;
+          rr:datatype xsd:string;
+          rr:column "f_table_schema"
+        ];
+      rr:predicate <https://geoconnex.us/geography_columns#f_table_schema>
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/geography_columns#f_table_name>;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:datatype xsd:string;
+          rr:termType rr:Literal;
+          rr:column "f_table_name"
+        ]
+    ];
+  rr:subjectMap [ a rr:SubjectMap, rr:TermMap;
+      rr:class <https://geoconnex.us/geography_columns>;
+      rr:termType rr:BlankNode;
+      rr:template "ontop-bnode-2{f_table_catalog}/{f_table_schema}/{f_table_name}/{f_geography_column}/{coord_dimension}/{srid}/{type}"
+    ];
+  rr:logicalTable [ a rr:R2RMLView;
+      rr:sqlQuery "SELECT * FROM \"geography_columns\""
+    ] .
+
+<urn:r2rml:MAPPING-ID4> a rr:TriplesMap;
+  rr:predicateObjectMap [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:column "srtext";
+          rr:termType rr:Literal;
+          rr:datatype xsd:string
+        ];
+      rr:predicate <https://geoconnex.us/spatial_ref_sys#srtext>
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/spatial_ref_sys#proj4text>;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:column "proj4text";
+          rr:datatype xsd:string;
+          rr:termType rr:Literal
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:column "auth_srid";
+          rr:datatype xsd:integer;
+          rr:termType rr:Literal
+        ];
+      rr:predicate <https://geoconnex.us/spatial_ref_sys#auth_srid>
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/spatial_ref_sys#srid>;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:datatype xsd:integer;
+          rr:termType rr:Literal;
+          rr:column "srid"
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/spatial_ref_sys#auth_name>;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:termType rr:Literal;
+          rr:column "auth_name";
+          rr:datatype xsd:string
+        ]
+    ];
+  rr:logicalTable [ a rr:R2RMLView;
+      rr:sqlQuery "SELECT * FROM \"spatial_ref_sys\""
+    ];
+  rr:subjectMap [ a rr:SubjectMap, rr:TermMap;
+      rr:termType rr:IRI;
+      rr:template "https://geoconnex.us/spatial_ref_sys/srid={srid}";
+      rr:class <https://geoconnex.us/spatial_ref_sys>
+    ] .
+
+<urn:r2rml:MAPPING-ID5> a rr:TriplesMap;
+  rr:predicateObjectMap [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:termType rr:Literal;
+          rr:column "coord_dimension";
+          rr:datatype xsd:integer
+        ];
+      rr:predicate <https://geoconnex.us/geometry_columns#coord_dimension>
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/geometry_columns#srid>;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:datatype xsd:integer;
+          rr:column "srid";
+          rr:termType rr:Literal
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:column "type";
+          rr:datatype xsd:string;
+          rr:termType rr:Literal
+        ];
+      rr:predicate <https://geoconnex.us/geometry_columns#type>
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:termType rr:Literal;
+          rr:column "f_geometry_column";
+          rr:datatype xsd:string
+        ];
+      rr:predicate <https://geoconnex.us/geometry_columns#f_geometry_column>
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/geometry_columns#f_table_schema>;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:datatype xsd:string;
+          rr:termType rr:Literal;
+          rr:column "f_table_schema"
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:datatype xsd:string;
+          rr:termType rr:Literal;
+          rr:column "f_table_name"
+        ];
+      rr:predicate <https://geoconnex.us/geometry_columns#f_table_name>
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:column "f_table_catalog";
+          rr:datatype xsd:string;
+          rr:termType rr:Literal
+        ];
+      rr:predicate <https://geoconnex.us/geometry_columns#f_table_catalog>
+    ];
+  rr:subjectMap [ a rr:SubjectMap, rr:TermMap;
+      rr:class <https://geoconnex.us/geometry_columns>;
+      rr:template "ontop-bnode-3{f_table_catalog}/{f_table_schema}/{f_table_name}/{f_geometry_column}/{coord_dimension}/{srid}/{type}";
+      rr:termType rr:BlankNode
+    ];
+  rr:logicalTable [ a rr:R2RMLView;
+      rr:sqlQuery "SELECT * FROM \"geometry_columns\""
+    ] .
+
+<urn:r2rml:MAPPING-ID6> a rr:TriplesMap;
+  rr:predicateObjectMap [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/observations#observation_time>;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:termType rr:Literal;
+          rr:datatype xsd:dateTime;
+          rr:column "observation_time"
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/observations#observation_id>;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:termType rr:Literal;
+          rr:datatype xsd:integer;
+          rr:column "observation_id"
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:datatype xsd:integer;
+          rr:termType rr:Literal;
+          rr:column "location_id"
+        ];
+      rr:predicate <https://geoconnex.us/observations#location_id>
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:datatype xsd:string;
+          rr:termType rr:Literal;
+          rr:column "parameter_id"
+        ];
+      rr:predicate <https://geoconnex.us/observations#parameter_id>
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:termType rr:Literal;
+          rr:datatype xsd:double;
+          rr:column "observation_value"
+        ];
+      rr:predicate <https://geoconnex.us/observations#observation_value>
+    ];
+  rr:subjectMap [ a rr:SubjectMap, rr:TermMap;
+      rr:termType rr:IRI;
+      rr:template "https://geoconnex.us/observations/observation_id={observation_id}";
+      rr:class <https://geoconnex.us/observations>
+    ];
+  rr:logicalTable [ a rr:R2RMLView;
+      rr:sqlQuery "SELECT * FROM \"edr_quickstart\".\"observations\""
+    ] .
+
+<urn:r2rml:MAPPING-ID7> a rr:TriplesMap;
+  rr:predicateObjectMap [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/observations#ref-location_id>;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:termType rr:IRI;
+          rr:template "https://geoconnex.us/locations/location_id={locations_location_id}"
+        ]
+    ];
+  rr:subjectMap [ a rr:SubjectMap, rr:TermMap;
+      rr:termType rr:IRI;
+      rr:template "https://geoconnex.us/observations/observation_id={observations_observation_id}"
+    ];
+  rr:logicalTable [ a rr:R2RMLView;
+      rr:sqlQuery "SELECT \"edr_quickstart\".\"observations\".\"observation_id\" AS \"observations_observation_id\", \"edr_quickstart\".\"locations\".\"location_id\" AS \"locations_location_id\" FROM \"edr_quickstart\".\"observations\", \"edr_quickstart\".\"locations\" WHERE \"edr_quickstart\".\"observations\".\"location_id\" = \"edr_quickstart\".\"locations\".\"location_id\""
+    ] .
+
+<urn:r2rml:MAPPING-ID8> a rr:TriplesMap;
+  rr:predicateObjectMap [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:template "https://geoconnex.us/parameters/parameter_id={parameters_parameter_id}";
+          rr:termType rr:IRI
+        ];
+      rr:predicate <https://geoconnex.us/observations#ref-parameter_id>
+    ];
+  rr:logicalTable [ a rr:R2RMLView;
+      rr:sqlQuery "SELECT \"edr_quickstart\".\"observations\".\"observation_id\" AS \"observations_observation_id\", \"edr_quickstart\".\"parameters\".\"parameter_id\" AS \"parameters_parameter_id\" FROM \"edr_quickstart\".\"observations\", \"edr_quickstart\".\"parameters\" WHERE \"edr_quickstart\".\"observations\".\"parameter_id\" = \"edr_quickstart\".\"parameters\".\"parameter_id\""
+    ];
+  rr:subjectMap [ a rr:TermMap, rr:SubjectMap;
+      rr:termType rr:IRI;
+      rr:template "https://geoconnex.us/observations/observation_id={observations_observation_id}"
+    ] .
+
+<urn:r2rml:MAPPING-ID9> a rr:TriplesMap;
+  rr:predicateObjectMap [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_daily_vw#timeseries_id>;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:termType rr:Literal;
+          rr:column "timeseries_id";
+          rr:datatype xsd:string
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:termType rr:Literal;
+          rr:column "monitoring_location_id";
+          rr:datatype xsd:string
+        ];
+      rr:predicate <https://geoconnex.us/waterservices_daily_vw#monitoring_location_id>
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_daily_vw#parameter_code>;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:column "parameter_code";
+          rr:datatype xsd:string;
+          rr:termType rr:Literal
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_daily_vw#id>;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:datatype xsd:string;
+          rr:column "id";
+          rr:termType rr:Literal
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:datatype xsd:string;
+          rr:termType rr:Literal;
+          rr:column "geometry"
+        ];
+      rr:predicate <https://geoconnex.us/waterservices_daily_vw#geometry>
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_daily_vw#unit_of_measure>;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:termType rr:Literal;
+          rr:datatype xsd:string;
+          rr:column "unit_of_measure"
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:termType rr:Literal;
+          rr:column "approval_status";
+          rr:datatype xsd:string
+        ];
+      rr:predicate <https://geoconnex.us/waterservices_daily_vw#approval_status>
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_daily_vw#qualifier>;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:column "qualifier";
+          rr:termType rr:Literal;
+          rr:datatype xsd:string
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_daily_vw#last_modified>;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:column "last_modified";
+          rr:termType rr:Literal;
+          rr:datatype xsd:dateTime
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:datatype xsd:string;
+          rr:column "statistic_id";
+          rr:termType rr:Literal
+        ];
+      rr:predicate <https://geoconnex.us/waterservices_daily_vw#statistic_id>
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_daily_vw#time>;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:datatype xsd:date;
+          rr:termType rr:Literal;
+          rr:column "time"
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:column "value";
+          rr:termType rr:Literal;
+          rr:datatype xsd:double
+        ];
+      rr:predicate <https://geoconnex.us/waterservices_daily_vw#value>
+    ];
+  rr:logicalTable [ a rr:R2RMLView;
+      rr:sqlQuery "SELECT * FROM \"capture\".\"waterservices_daily_vw\""
+    ];
+  rr:subjectMap [ a rr:TermMap, rr:SubjectMap;
+      rr:template "ontop-bnode-4{id}/{timeseries_id}/{monitoring_location_id}/{parameter_code}/{statistic_id}/{time}/{value}/{unit_of_measure}/{approval_status}/{qualifier}/{last_modified}/{geometry}";
+      rr:class <https://geoconnex.us/waterservices_daily_vw>;
+      rr:termType rr:BlankNode
+    ] .
+
+<urn:r2rml:MAPPING-ID10> a rr:TriplesMap;
+  rr:predicateObjectMap [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/locations#description>;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:column "description";
+          rr:termType rr:Literal;
+          rr:datatype xsd:string
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:datatype xsd:string;
+          rr:column "name";
+          rr:termType rr:Literal
+        ];
+      rr:predicate <https://geoconnex.us/locations#name>
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:termType rr:Literal;
+          rr:datatype xsd:string;
+          rr:column "geometry"
+        ];
+      rr:predicate <https://geoconnex.us/locations#geometry>
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/locations#properties>;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:termType rr:Literal;
+          rr:column "properties";
+          rr:datatype xsd:string
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:termType rr:Literal;
+          rr:column "location_id";
+          rr:datatype xsd:integer
+        ];
+      rr:predicate <https://geoconnex.us/locations#location_id>
+    ];
+  rr:logicalTable [ a rr:R2RMLView;
+      rr:sqlQuery "SELECT * FROM \"edr_quickstart\".\"locations\""
+    ];
+  rr:subjectMap [ a rr:SubjectMap, rr:TermMap;
+      rr:termType rr:IRI;
+      rr:template "https://geoconnex.us/locations/location_id={location_id}";
+      rr:class <https://geoconnex.us/locations>
+    ] .
+
+<urn:r2rml:MAPPING-ID11> a rr:TriplesMap;
+  rr:logicalTable [ a rr:R2RMLView;
+      rr:sqlQuery "SELECT * FROM \"capture\".\"waterservices_daily\""
+    ];
+  rr:subjectMap [ a rr:SubjectMap, rr:TermMap;
+      rr:termType rr:IRI;
+      rr:class <https://geoconnex.us/waterservices_daily>;
+      rr:template "https://geoconnex.us/waterservices_daily/id={id}"
+    ];
+  rr:predicateObjectMap [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_daily#parameter_code>;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:column "parameter_code";
+          rr:datatype xsd:string;
+          rr:termType rr:Literal
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_daily#monitoring_location_id>;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:column "monitoring_location_id";
+          rr:termType rr:Literal;
+          rr:datatype xsd:string
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_daily#time>;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:datatype xsd:date;
+          rr:termType rr:Literal;
+          rr:column "time"
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:column "statistic_id";
+          rr:termType rr:Literal;
+          rr:datatype xsd:string
+        ];
+      rr:predicate <https://geoconnex.us/waterservices_daily#statistic_id>
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_daily#timeseries_id>;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:column "timeseries_id";
+          rr:datatype xsd:string;
+          rr:termType rr:Literal
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:column "id";
+          rr:termType rr:Literal;
+          rr:datatype xsd:string
+        ];
+      rr:predicate <https://geoconnex.us/waterservices_daily#id>
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_daily#last_modified>;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:datatype xsd:dateTime;
+          rr:termType rr:Literal;
+          rr:column "last_modified"
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_daily#qualifier>;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:column "qualifier";
+          rr:termType rr:Literal;
+          rr:datatype xsd:string
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:column "geometry";
+          rr:termType rr:Literal;
+          rr:datatype xsd:string
+        ];
+      rr:predicate <https://geoconnex.us/waterservices_daily#geometry>
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_daily#unit_of_measure>;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:column "unit_of_measure";
+          rr:termType rr:Literal;
+          rr:datatype xsd:string
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:termType rr:Literal;
+          rr:datatype xsd:double;
+          rr:column "value"
+        ];
+      rr:predicate <https://geoconnex.us/waterservices_daily#value>
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/waterservices_daily#approval_status>;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:datatype xsd:string;
+          rr:termType rr:Literal;
+          rr:column "approval_status"
+        ]
+    ] .
+
+<urn:r2rml:MAPPING-ID12> a rr:TriplesMap;
+  rr:predicateObjectMap [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/parameters#parameter_unit_label>;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:column "parameter_unit_label";
+          rr:termType rr:Literal;
+          rr:datatype xsd:string
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:datatype xsd:string;
+          rr:termType rr:Literal;
+          rr:column "parameter_name"
+        ];
+      rr:predicate <https://geoconnex.us/parameters#parameter_name>
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/parameters#parameter_id>;
+      rr:objectMap [ a rr:TermMap, rr:ObjectMap;
+          rr:column "parameter_id";
+          rr:termType rr:Literal;
+          rr:datatype xsd:string
+        ]
+    ], [ a rr:PredicateObjectMap;
+      rr:predicate <https://geoconnex.us/parameters#parameter_unit_symbol>;
+      rr:objectMap [ a rr:ObjectMap, rr:TermMap;
+          rr:datatype xsd:string;
+          rr:column "parameter_unit_symbol";
+          rr:termType rr:Literal
+        ]
+    ];
+  rr:logicalTable [ a rr:R2RMLView;
+      rr:sqlQuery "SELECT * FROM \"edr_quickstart\".\"parameters\""
+    ];
+  rr:subjectMap [ a rr:TermMap, rr:SubjectMap;
+      rr:termType rr:IRI;
+      rr:template "https://geoconnex.us/parameters/parameter_id={parameter_id}";
+      rr:class <https://geoconnex.us/parameters>
+    ] .

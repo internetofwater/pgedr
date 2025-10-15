@@ -1,0 +1,57 @@
+[PrefixDeclaration]
+rdf:		http://www.w3.org/1999/02/22-rdf-syntax-ns#
+rdfs:		http://www.w3.org/2000/01/rdf-schema#
+owl:		http://www.w3.org/2002/07/owl#
+xsd:		http://www.w3.org/2001/XMLSchema#
+obda:		https://w3id.org/obda/vocabulary#
+
+[MappingDeclaration] @collection [[
+mappingId	MAPPING-ID1
+target		<https://geoconnex.us/waterservices_timeseries_metadata/id={id}> a <https://geoconnex.us/waterservices_timeseries_metadata> ; <https://geoconnex.us/waterservices_timeseries_metadata#id> {id}^^xsd:string ; <https://geoconnex.us/waterservices_timeseries_metadata#unit_of_measure> {unit_of_measure}^^xsd:string ; <https://geoconnex.us/waterservices_timeseries_metadata#parameter_name> {parameter_name}^^xsd:string ; <https://geoconnex.us/waterservices_timeseries_metadata#parameter_code> {parameter_code}^^xsd:string ; <https://geoconnex.us/waterservices_timeseries_metadata#statistic_id> {statistic_id}^^xsd:string ; <https://geoconnex.us/waterservices_timeseries_metadata#last_modified> {last_modified}^^xsd:dateTime ; <https://geoconnex.us/waterservices_timeseries_metadata#begin> {begin}^^xsd:dateTime ; <https://geoconnex.us/waterservices_timeseries_metadata#end> {end}^^xsd:dateTime ; <https://geoconnex.us/waterservices_timeseries_metadata#computation_period_identifier> {computation_period_identifier}^^xsd:string ; <https://geoconnex.us/waterservices_timeseries_metadata#computation_identifier> {computation_identifier}^^xsd:string ; <https://geoconnex.us/waterservices_timeseries_metadata#thresholds> {thresholds}^^xsd:string ; <https://geoconnex.us/waterservices_timeseries_metadata#sublocation_identifier> {sublocation_identifier}^^xsd:string ; <https://geoconnex.us/waterservices_timeseries_metadata#primary> {primary}^^xsd:string ; <https://geoconnex.us/waterservices_timeseries_metadata#monitoring_location_id> {monitoring_location_id}^^xsd:string ; <https://geoconnex.us/waterservices_timeseries_metadata#geometry> {geometry}^^xsd:string . 
+source		SELECT * FROM "capture"."waterservices_timeseries_metadata"
+
+mappingId	MAPPING-ID2
+target		_:ontop-bnode-1{id}/{unit_of_measure}/{parameter_name}/{parameter_code}/{statistic_id}/{last_modified}/{begin}/{end}/{computation_period_identifier}/{computation_identifier}/{thresholds}/{sublocation_identifier}/{primary}/{monitoring_location_id}/{geometry} a <https://geoconnex.us/waterservices_timeseries_metadata_vw> ; <https://geoconnex.us/waterservices_timeseries_metadata_vw#id> {id}^^xsd:string ; <https://geoconnex.us/waterservices_timeseries_metadata_vw#unit_of_measure> {unit_of_measure}^^xsd:string ; <https://geoconnex.us/waterservices_timeseries_metadata_vw#parameter_name> {parameter_name}^^xsd:string ; <https://geoconnex.us/waterservices_timeseries_metadata_vw#parameter_code> {parameter_code}^^xsd:string ; <https://geoconnex.us/waterservices_timeseries_metadata_vw#statistic_id> {statistic_id}^^xsd:string ; <https://geoconnex.us/waterservices_timeseries_metadata_vw#last_modified> {last_modified}^^xsd:dateTime ; <https://geoconnex.us/waterservices_timeseries_metadata_vw#begin> {begin}^^xsd:dateTime ; <https://geoconnex.us/waterservices_timeseries_metadata_vw#end> {end}^^xsd:dateTime ; <https://geoconnex.us/waterservices_timeseries_metadata_vw#computation_period_identifier> {computation_period_identifier}^^xsd:string ; <https://geoconnex.us/waterservices_timeseries_metadata_vw#computation_identifier> {computation_identifier}^^xsd:string ; <https://geoconnex.us/waterservices_timeseries_metadata_vw#thresholds> {thresholds}^^xsd:string ; <https://geoconnex.us/waterservices_timeseries_metadata_vw#sublocation_identifier> {sublocation_identifier}^^xsd:string ; <https://geoconnex.us/waterservices_timeseries_metadata_vw#primary> {primary}^^xsd:string ; <https://geoconnex.us/waterservices_timeseries_metadata_vw#monitoring_location_id> {monitoring_location_id}^^xsd:string ; <https://geoconnex.us/waterservices_timeseries_metadata_vw#geometry> {geometry}^^xsd:string . 
+source		SELECT * FROM "capture"."waterservices_timeseries_metadata_vw"
+
+mappingId	MAPPING-ID3
+target		_:ontop-bnode-2{f_table_catalog}/{f_table_schema}/{f_table_name}/{f_geography_column}/{coord_dimension}/{srid}/{type} a <https://geoconnex.us/geography_columns> ; <https://geoconnex.us/geography_columns#f_table_catalog> {f_table_catalog}^^xsd:string ; <https://geoconnex.us/geography_columns#f_table_schema> {f_table_schema}^^xsd:string ; <https://geoconnex.us/geography_columns#f_table_name> {f_table_name}^^xsd:string ; <https://geoconnex.us/geography_columns#f_geography_column> {f_geography_column}^^xsd:string ; <https://geoconnex.us/geography_columns#coord_dimension> {coord_dimension}^^xsd:integer ; <https://geoconnex.us/geography_columns#srid> {srid}^^xsd:integer ; <https://geoconnex.us/geography_columns#type> {type}^^xsd:string . 
+source		SELECT * FROM "geography_columns"
+
+mappingId	MAPPING-ID4
+target		<https://geoconnex.us/spatial_ref_sys/srid={srid}> a <https://geoconnex.us/spatial_ref_sys> ; <https://geoconnex.us/spatial_ref_sys#srid> {srid}^^xsd:integer ; <https://geoconnex.us/spatial_ref_sys#auth_name> {auth_name}^^xsd:string ; <https://geoconnex.us/spatial_ref_sys#auth_srid> {auth_srid}^^xsd:integer ; <https://geoconnex.us/spatial_ref_sys#srtext> {srtext}^^xsd:string ; <https://geoconnex.us/spatial_ref_sys#proj4text> {proj4text}^^xsd:string . 
+source		SELECT * FROM "spatial_ref_sys"
+
+mappingId	MAPPING-ID5
+target		_:ontop-bnode-3{f_table_catalog}/{f_table_schema}/{f_table_name}/{f_geometry_column}/{coord_dimension}/{srid}/{type} a <https://geoconnex.us/geometry_columns> ; <https://geoconnex.us/geometry_columns#f_table_catalog> {f_table_catalog}^^xsd:string ; <https://geoconnex.us/geometry_columns#f_table_schema> {f_table_schema}^^xsd:string ; <https://geoconnex.us/geometry_columns#f_table_name> {f_table_name}^^xsd:string ; <https://geoconnex.us/geometry_columns#f_geometry_column> {f_geometry_column}^^xsd:string ; <https://geoconnex.us/geometry_columns#coord_dimension> {coord_dimension}^^xsd:integer ; <https://geoconnex.us/geometry_columns#srid> {srid}^^xsd:integer ; <https://geoconnex.us/geometry_columns#type> {type}^^xsd:string . 
+source		SELECT * FROM "geometry_columns"
+
+mappingId	MAPPING-ID6
+target		<https://geoconnex.us/observations/observation_id={observation_id}> a <https://geoconnex.us/observations> ; <https://geoconnex.us/observations#observation_id> {observation_id}^^xsd:integer ; <https://geoconnex.us/observations#location_id> {location_id}^^xsd:integer ; <https://geoconnex.us/observations#parameter_id> {parameter_id}^^xsd:string ; <https://geoconnex.us/observations#observation_value> {observation_value}^^xsd:double ; <https://geoconnex.us/observations#observation_time> {observation_time}^^xsd:dateTime . 
+source		SELECT * FROM "edr_quickstart"."observations"
+
+mappingId	MAPPING-ID7
+target		<https://geoconnex.us/observations/observation_id={observations_observation_id}> <https://geoconnex.us/observations#ref-location_id> <https://geoconnex.us/locations/location_id={locations_location_id}> . 
+source		SELECT "edr_quickstart"."observations"."observation_id" AS "observations_observation_id", "edr_quickstart"."locations"."location_id" AS "locations_location_id" FROM "edr_quickstart"."observations", "edr_quickstart"."locations" WHERE "edr_quickstart"."observations"."location_id" = "edr_quickstart"."locations"."location_id"
+
+mappingId	MAPPING-ID8
+target		<https://geoconnex.us/observations/observation_id={observations_observation_id}> <https://geoconnex.us/observations#ref-parameter_id> <https://geoconnex.us/parameters/parameter_id={parameters_parameter_id}> . 
+source		SELECT "edr_quickstart"."observations"."observation_id" AS "observations_observation_id", "edr_quickstart"."parameters"."parameter_id" AS "parameters_parameter_id" FROM "edr_quickstart"."observations", "edr_quickstart"."parameters" WHERE "edr_quickstart"."observations"."parameter_id" = "edr_quickstart"."parameters"."parameter_id"
+
+mappingId	MAPPING-ID9
+target		_:ontop-bnode-4{id}/{timeseries_id}/{monitoring_location_id}/{parameter_code}/{statistic_id}/{time}/{value}/{unit_of_measure}/{approval_status}/{qualifier}/{last_modified}/{geometry} a <https://geoconnex.us/waterservices_daily_vw> ; <https://geoconnex.us/waterservices_daily_vw#id> {id}^^xsd:string ; <https://geoconnex.us/waterservices_daily_vw#timeseries_id> {timeseries_id}^^xsd:string ; <https://geoconnex.us/waterservices_daily_vw#monitoring_location_id> {monitoring_location_id}^^xsd:string ; <https://geoconnex.us/waterservices_daily_vw#parameter_code> {parameter_code}^^xsd:string ; <https://geoconnex.us/waterservices_daily_vw#statistic_id> {statistic_id}^^xsd:string ; <https://geoconnex.us/waterservices_daily_vw#time> {time}^^xsd:date ; <https://geoconnex.us/waterservices_daily_vw#value> {value}^^xsd:double ; <https://geoconnex.us/waterservices_daily_vw#unit_of_measure> {unit_of_measure}^^xsd:string ; <https://geoconnex.us/waterservices_daily_vw#approval_status> {approval_status}^^xsd:string ; <https://geoconnex.us/waterservices_daily_vw#qualifier> {qualifier}^^xsd:string ; <https://geoconnex.us/waterservices_daily_vw#last_modified> {last_modified}^^xsd:dateTime ; <https://geoconnex.us/waterservices_daily_vw#geometry> {geometry}^^xsd:string . 
+source		SELECT * FROM "capture"."waterservices_daily_vw"
+
+mappingId	MAPPING-ID10
+target		<https://geoconnex.us/locations/location_id={location_id}> a <https://geoconnex.us/locations> ; <https://geoconnex.us/locations#location_id> {location_id}^^xsd:integer ; <https://geoconnex.us/locations#name> {name}^^xsd:string ; <https://geoconnex.us/locations#description> {description}^^xsd:string ; <https://geoconnex.us/locations#properties> {properties}^^xsd:string ; <https://geoconnex.us/locations#geometry> {geometry}^^xsd:string . 
+source		SELECT * FROM "edr_quickstart"."locations"
+
+mappingId	MAPPING-ID11
+target		<https://geoconnex.us/waterservices_daily/id={id}> a <https://geoconnex.us/waterservices_daily> ; <https://geoconnex.us/waterservices_daily#id> {id}^^xsd:string ; <https://geoconnex.us/waterservices_daily#timeseries_id> {timeseries_id}^^xsd:string ; <https://geoconnex.us/waterservices_daily#monitoring_location_id> {monitoring_location_id}^^xsd:string ; <https://geoconnex.us/waterservices_daily#parameter_code> {parameter_code}^^xsd:string ; <https://geoconnex.us/waterservices_daily#statistic_id> {statistic_id}^^xsd:string ; <https://geoconnex.us/waterservices_daily#time> {time}^^xsd:date ; <https://geoconnex.us/waterservices_daily#value> {value}^^xsd:double ; <https://geoconnex.us/waterservices_daily#unit_of_measure> {unit_of_measure}^^xsd:string ; <https://geoconnex.us/waterservices_daily#approval_status> {approval_status}^^xsd:string ; <https://geoconnex.us/waterservices_daily#qualifier> {qualifier}^^xsd:string ; <https://geoconnex.us/waterservices_daily#last_modified> {last_modified}^^xsd:dateTime ; <https://geoconnex.us/waterservices_daily#geometry> {geometry}^^xsd:string . 
+source		SELECT * FROM "capture"."waterservices_daily"
+
+mappingId	MAPPING-ID12
+target		<https://geoconnex.us/parameters/parameter_id={parameter_id}> a <https://geoconnex.us/parameters> ; <https://geoconnex.us/parameters#parameter_id> {parameter_id}^^xsd:string ; <https://geoconnex.us/parameters#parameter_name> {parameter_name}^^xsd:string ; <https://geoconnex.us/parameters#parameter_unit_symbol> {parameter_unit_symbol}^^xsd:string ; <https://geoconnex.us/parameters#parameter_unit_label> {parameter_unit_label}^^xsd:string . 
+source		SELECT * FROM "edr_quickstart"."parameters"
+]]
+

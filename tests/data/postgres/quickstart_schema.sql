@@ -3,6 +3,7 @@
 
 -- Setup PostGIS
 CREATE EXTENSION IF NOT EXISTS postgis;
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- Create supporting schemas
 CREATE SCHEMA IF NOT EXISTS edr_quickstart;

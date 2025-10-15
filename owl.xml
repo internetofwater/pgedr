@@ -1,0 +1,745 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="https://geoconnex.us/"
+     xml:base="https://geoconnex.us/"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
+    <owl:Ontology rdf:about="https://geoconnex.us/"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Object Properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+
+    
+
+
+    <!-- https://geoconnex.us/observations#ref-location_id -->
+
+
+    <owl:ObjectProperty rdf:about="https://geoconnex.us/observations#ref-location_id"/>
+    
+
+
+    <!-- https://geoconnex.us/observations#ref-parameter_id -->
+
+
+    <owl:ObjectProperty rdf:about="https://geoconnex.us/observations#ref-parameter_id"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Data properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+
+    
+
+
+    <!-- https://geoconnex.us/geography_columns#coord_dimension -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/geography_columns#coord_dimension"/>
+    
+
+
+    <!-- https://geoconnex.us/geography_columns#f_geography_column -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/geography_columns#f_geography_column"/>
+    
+
+
+    <!-- https://geoconnex.us/geography_columns#f_table_catalog -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/geography_columns#f_table_catalog"/>
+    
+
+
+    <!-- https://geoconnex.us/geography_columns#f_table_name -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/geography_columns#f_table_name"/>
+    
+
+
+    <!-- https://geoconnex.us/geography_columns#f_table_schema -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/geography_columns#f_table_schema"/>
+    
+
+
+    <!-- https://geoconnex.us/geography_columns#srid -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/geography_columns#srid"/>
+    
+
+
+    <!-- https://geoconnex.us/geography_columns#type -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/geography_columns#type"/>
+    
+
+
+    <!-- https://geoconnex.us/geometry_columns#coord_dimension -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/geometry_columns#coord_dimension"/>
+    
+
+
+    <!-- https://geoconnex.us/geometry_columns#f_geometry_column -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/geometry_columns#f_geometry_column"/>
+    
+
+
+    <!-- https://geoconnex.us/geometry_columns#f_table_catalog -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/geometry_columns#f_table_catalog"/>
+    
+
+
+    <!-- https://geoconnex.us/geometry_columns#f_table_name -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/geometry_columns#f_table_name"/>
+    
+
+
+    <!-- https://geoconnex.us/geometry_columns#f_table_schema -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/geometry_columns#f_table_schema"/>
+    
+
+
+    <!-- https://geoconnex.us/geometry_columns#srid -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/geometry_columns#srid"/>
+    
+
+
+    <!-- https://geoconnex.us/geometry_columns#type -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/geometry_columns#type"/>
+    
+
+
+    <!-- https://geoconnex.us/locations#description -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/locations#description"/>
+    
+
+
+    <!-- https://geoconnex.us/locations#geometry -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/locations#geometry"/>
+    
+
+
+    <!-- https://geoconnex.us/locations#location_id -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/locations#location_id"/>
+    
+
+
+    <!-- https://geoconnex.us/locations#name -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/locations#name"/>
+    
+
+
+    <!-- https://geoconnex.us/locations#properties -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/locations#properties"/>
+    
+
+
+    <!-- https://geoconnex.us/observations#location_id -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/observations#location_id"/>
+    
+
+
+    <!-- https://geoconnex.us/observations#observation_id -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/observations#observation_id"/>
+    
+
+
+    <!-- https://geoconnex.us/observations#observation_time -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/observations#observation_time"/>
+    
+
+
+    <!-- https://geoconnex.us/observations#observation_value -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/observations#observation_value"/>
+    
+
+
+    <!-- https://geoconnex.us/observations#parameter_id -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/observations#parameter_id"/>
+    
+
+
+    <!-- https://geoconnex.us/parameters#parameter_id -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/parameters#parameter_id"/>
+    
+
+
+    <!-- https://geoconnex.us/parameters#parameter_name -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/parameters#parameter_name"/>
+    
+
+
+    <!-- https://geoconnex.us/parameters#parameter_unit_label -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/parameters#parameter_unit_label"/>
+    
+
+
+    <!-- https://geoconnex.us/parameters#parameter_unit_symbol -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/parameters#parameter_unit_symbol"/>
+    
+
+
+    <!-- https://geoconnex.us/spatial_ref_sys#auth_name -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/spatial_ref_sys#auth_name"/>
+    
+
+
+    <!-- https://geoconnex.us/spatial_ref_sys#auth_srid -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/spatial_ref_sys#auth_srid"/>
+    
+
+
+    <!-- https://geoconnex.us/spatial_ref_sys#proj4text -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/spatial_ref_sys#proj4text"/>
+    
+
+
+    <!-- https://geoconnex.us/spatial_ref_sys#srid -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/spatial_ref_sys#srid"/>
+    
+
+
+    <!-- https://geoconnex.us/spatial_ref_sys#srtext -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/spatial_ref_sys#srtext"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_daily#approval_status -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_daily#approval_status"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_daily#geometry -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_daily#geometry"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_daily#id -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_daily#id"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_daily#last_modified -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_daily#last_modified"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_daily#monitoring_location_id -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_daily#monitoring_location_id"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_daily#parameter_code -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_daily#parameter_code"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_daily#qualifier -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_daily#qualifier"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_daily#statistic_id -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_daily#statistic_id"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_daily#time -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_daily#time"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_daily#timeseries_id -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_daily#timeseries_id"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_daily#unit_of_measure -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_daily#unit_of_measure"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_daily#value -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_daily#value"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_daily_vw#approval_status -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_daily_vw#approval_status"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_daily_vw#geometry -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_daily_vw#geometry"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_daily_vw#id -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_daily_vw#id"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_daily_vw#last_modified -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_daily_vw#last_modified"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_daily_vw#monitoring_location_id -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_daily_vw#monitoring_location_id"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_daily_vw#parameter_code -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_daily_vw#parameter_code"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_daily_vw#qualifier -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_daily_vw#qualifier"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_daily_vw#statistic_id -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_daily_vw#statistic_id"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_daily_vw#time -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_daily_vw#time"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_daily_vw#timeseries_id -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_daily_vw#timeseries_id"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_daily_vw#unit_of_measure -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_daily_vw#unit_of_measure"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_daily_vw#value -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_daily_vw#value"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata#begin -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_timeseries_metadata#begin"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata#computation_identifier -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_timeseries_metadata#computation_identifier"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata#computation_period_identifier -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_timeseries_metadata#computation_period_identifier"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata#end -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_timeseries_metadata#end"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata#geometry -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_timeseries_metadata#geometry"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata#id -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_timeseries_metadata#id"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata#last_modified -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_timeseries_metadata#last_modified"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata#monitoring_location_id -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_timeseries_metadata#monitoring_location_id"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata#parameter_code -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_timeseries_metadata#parameter_code"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata#parameter_name -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_timeseries_metadata#parameter_name"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata#primary -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_timeseries_metadata#primary"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata#statistic_id -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_timeseries_metadata#statistic_id"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata#sublocation_identifier -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_timeseries_metadata#sublocation_identifier"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata#thresholds -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_timeseries_metadata#thresholds"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata#unit_of_measure -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_timeseries_metadata#unit_of_measure"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata_vw#begin -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_timeseries_metadata_vw#begin"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata_vw#computation_identifier -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_timeseries_metadata_vw#computation_identifier"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata_vw#computation_period_identifier -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_timeseries_metadata_vw#computation_period_identifier"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata_vw#end -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_timeseries_metadata_vw#end"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata_vw#geometry -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_timeseries_metadata_vw#geometry"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata_vw#id -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_timeseries_metadata_vw#id"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata_vw#last_modified -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_timeseries_metadata_vw#last_modified"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata_vw#monitoring_location_id -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_timeseries_metadata_vw#monitoring_location_id"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata_vw#parameter_code -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_timeseries_metadata_vw#parameter_code"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata_vw#parameter_name -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_timeseries_metadata_vw#parameter_name"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata_vw#primary -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_timeseries_metadata_vw#primary"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata_vw#statistic_id -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_timeseries_metadata_vw#statistic_id"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata_vw#sublocation_identifier -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_timeseries_metadata_vw#sublocation_identifier"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata_vw#thresholds -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_timeseries_metadata_vw#thresholds"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata_vw#unit_of_measure -->
+
+
+    <owl:DatatypeProperty rdf:about="https://geoconnex.us/waterservices_timeseries_metadata_vw#unit_of_measure"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+
+    
+
+
+    <!-- https://geoconnex.us/geography_columns -->
+
+
+    <owl:Class rdf:about="https://geoconnex.us/geography_columns"/>
+    
+
+
+    <!-- https://geoconnex.us/geometry_columns -->
+
+
+    <owl:Class rdf:about="https://geoconnex.us/geometry_columns"/>
+    
+
+
+    <!-- https://geoconnex.us/locations -->
+
+
+    <owl:Class rdf:about="https://geoconnex.us/locations"/>
+    
+
+
+    <!-- https://geoconnex.us/observations -->
+
+
+    <owl:Class rdf:about="https://geoconnex.us/observations"/>
+    
+
+
+    <!-- https://geoconnex.us/parameters -->
+
+
+    <owl:Class rdf:about="https://geoconnex.us/parameters"/>
+    
+
+
+    <!-- https://geoconnex.us/spatial_ref_sys -->
+
+
+    <owl:Class rdf:about="https://geoconnex.us/spatial_ref_sys"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_daily -->
+
+
+    <owl:Class rdf:about="https://geoconnex.us/waterservices_daily"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_daily_vw -->
+
+
+    <owl:Class rdf:about="https://geoconnex.us/waterservices_daily_vw"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata -->
+
+
+    <owl:Class rdf:about="https://geoconnex.us/waterservices_timeseries_metadata"/>
+    
+
+
+    <!-- https://geoconnex.us/waterservices_timeseries_metadata_vw -->
+
+
+    <owl:Class rdf:about="https://geoconnex.us/waterservices_timeseries_metadata_vw"/>
+</rdf:RDF>
+
+
+
+<!-- Generated by the OWL API (version 5.5.1) https://github.com/owlcs/owlapi/ -->
+
+
