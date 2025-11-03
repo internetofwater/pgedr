@@ -12,52 +12,52 @@ from pgedr.sql.lib import get_column_from_qualified_name as gqname
 from pgedr.sql.lib import recursive_getattr as rgetattr
 
 
-@pytest.fixture(params=["tables", "views"])
+@pytest.fixture(params=['tables', 'views'])
 def config(request):
     pygeoapi_config = {
-        "name": "PostgresEDRProvider",
-        "type": "edr",
-        "data": {
-            "host": "localhost",
-            "dbname": "edr",
-            "user": "postgres",
-            "password": "changeMe",
-            "search_path": ["capture"],
+        'name': 'PostgresEDRProvider',
+        'type': 'edr',
+        'data': {
+            'host': 'localhost',
+            'dbname': 'edr',
+            'user': 'postgres',
+            'password': 'changeMe',
+            'search_path': ['capture'],
         },
-        "table": "waterservices_daily",
-        "edr_fields": {
-            "id_field": "id",
-            "geom_field": "geometry",
-            "time_field": "time",
-            "location_field": "monitoring_location_id",
-            "result_field": "value",
-            "parameter_id": "waterservices_timeseries_metadata.parameter_code",
-            "parameter_name": "waterservices_timeseries_metadata.parameter_name",  # noqa
-            "parameter_unit": "unit_of_measure",
+        'table': 'waterservices_daily',
+        'edr_fields': {
+            'id_field': 'id',
+            'geom_field': 'geometry',
+            'time_field': 'time',
+            'location_field': 'monitoring_location_id',
+            'result_field': 'value',
+            'parameter_id': 'waterservices_timeseries_metadata.parameter_code',
+            'parameter_name': 'waterservices_timeseries_metadata.parameter_name',  # noqa
+            'parameter_unit': 'unit_of_measure',
         },
-        "external_tables": {
-            "waterservices_timeseries_metadata": {
-                "foreign": "parameter_code",
-                "remote": "parameter_code",
+        'external_tables': {
+            'waterservices_timeseries_metadata': {
+                'foreign': 'parameter_code',
+                'remote': 'parameter_code',
             }
         },
     }
 
-    if request.param == "tables":
+    if request.param == 'tables':
         return pygeoapi_config
 
-    if request.param == "views":
-        pygeoapi_config["table"] = "waterservices_daily_vw"
-        pygeoapi_config["edr_fields"]["parameter_name"] = (
-            "waterservices_timeseries_metadata_vw.parameter_name"
+    if request.param == 'views':
+        pygeoapi_config['table'] = 'waterservices_daily_vw'
+        pygeoapi_config['edr_fields']['parameter_name'] = (
+            'waterservices_timeseries_metadata_vw.parameter_name'
         )
-        pygeoapi_config["edr_fields"]["parameter_id"] = (
-            "waterservices_timeseries_metadata_vw.parameter_code"
+        pygeoapi_config['edr_fields']['parameter_id'] = (
+            'waterservices_timeseries_metadata_vw.parameter_code'
         )
-        pygeoapi_config["external_tables"] = {
-            "waterservices_timeseries_metadata_vw": {
-                "foreign": "parameter_code",
-                "remote": "parameter_code",
+        pygeoapi_config['external_tables'] = {
+            'waterservices_timeseries_metadata_vw': {
+                'foreign': 'parameter_code',
+                'remote': 'parameter_code',
             }
         }
         return pygeoapi_config
@@ -66,7 +66,7 @@ def config(request):
 
 
 def test_invalid_config(config):
-    config["edr_fields"]["parameter_id"] = "invalid_parameter_id"
+    config['edr_fields']['parameter_id'] = 'invalid_parameter_id'
     with pytest.raises(ProviderInvalidDataError):
         PostgresEDRProvider(config)
 
@@ -97,10 +97,10 @@ def test_can_query_single_edr_cols(config):
     ]
     edr_vals = [
         datetime.date(1925, 4, 10),
-        "00060",
-        "Discharge",
-        "ft^3/s",
-        "USGS-11281500",
+        '00060',
+        'Discharge',
+        'ft^3/s',
+        'USGS-11281500',
         129.0,
     ]
     with Session(p._engine) as session:
@@ -125,23 +125,23 @@ def test_fields(config):
     assert len(p.fields) == 7
     for k, v in p.fields.items():
         assert len(k) == 5
-        assert [k_ in ["title", "type", "x-ogc-unit"] for k_ in v]
+        assert [k_ in ['title', 'type', 'x-ogc-unit'] for k_ in v]
 
     selected_mappings = {
-        "00010": {
-            "type": "number",
-            "title": "Temperature, water",
-            "x-ogc-unit": "degC",
+        '00010': {
+            'type': 'number',
+            'title': 'Temperature, water',
+            'x-ogc-unit': 'degC',
         },
-        "00060": {
-            "type": "number",
-            "title": "Discharge",
-            "x-ogc-unit": "ft^3/s",
+        '00060': {
+            'type': 'number',
+            'title': 'Discharge',
+            'x-ogc-unit': 'ft^3/s',
         },
-        "00065": {
-            "type": "number",
-            "title": "Gage height",
-            "x-ogc-unit": "ft",
+        '00065': {
+            'type': 'number',
+            'title': 'Gage height',
+            'x-ogc-unit': 'ft',
         },
     }
     for k, v in selected_mappings.items():
@@ -153,88 +153,88 @@ def test_locations(config):
 
     locations = p.locations()
 
-    assert locations["type"] == "FeatureCollection"
-    assert len(locations["features"]) == 23
+    assert locations['type'] == 'FeatureCollection'
+    assert len(locations['features']) == 23
 
-    feature = locations["features"][0]
-    assert feature["id"] == "USGS-01465798"
-    assert feature["properties"]["parameters"] == ["00060"]
+    feature = locations['features'][0]
+    assert feature['id'] == 'USGS-01465798'
+    assert feature['properties']['parameters'] == ['00060']
 
 
 def test_locations_with_prop(config):
-    config["properties"] = [
-        "timeseries_id",
+    config['properties'] = [
+        'timeseries_id',
     ]
     p = PostgresEDRProvider(config)
 
     locations = p.locations()
 
-    assert locations["type"] == "FeatureCollection"
-    assert len(locations["features"]) == 23
+    assert locations['type'] == 'FeatureCollection'
+    assert len(locations['features']) == 23
 
-    feature = locations["features"][0]
-    assert feature["id"] == "USGS-01465798"
-    assert feature.get("properties")
-    assert "timeseries_id" in feature.get("properties")
+    feature = locations['features'][0]
+    assert feature['id'] == 'USGS-01465798'
+    assert feature.get('properties')
+    assert 'timeseries_id' in feature.get('properties')
 
 
 def test_locations_limit(config):
     p = PostgresEDRProvider(config)
 
     locations = p.locations(limit=1)
-    assert locations["type"] == "FeatureCollection"
-    assert len(locations["features"]) == 1
+    assert locations['type'] == 'FeatureCollection'
+    assert len(locations['features']) == 1
 
     locations = p.locations(limit=500)
-    assert locations["type"] == "FeatureCollection"
-    assert len(locations["features"]) == 23
+    assert locations['type'] == 'FeatureCollection'
+    assert len(locations['features']) == 23
 
     locations = p.locations(limit=5)
-    assert locations["type"] == "FeatureCollection"
-    assert len(locations["features"]) == 5
+    assert locations['type'] == 'FeatureCollection'
+    assert len(locations['features']) == 5
 
 
 def test_locations_bbox(config):
     p = PostgresEDRProvider(config)
 
     locations = p.locations(bbox=[-109, 31, -103, 37])
-    assert len(locations["features"]) == 3
+    assert len(locations['features']) == 3
 
 
 def test_locations_select_param(config):
     p = PostgresEDRProvider(config)
 
     locations = p.locations()
-    assert len(locations["parameters"]) == 7
+    assert len(locations['parameters']) == 7
 
-    locations = p.locations(select_properties=["00010"])
-    assert len(locations["features"]) == 4
-    assert len(locations["parameters"]) == 1
+    locations = p.locations(select_properties=['00010'])
+    assert len(locations['features']) == 4
+    assert len(locations['parameters']) == 1
 
-    locations = p.locations(select_properties=["00060"])
-    assert len(locations["features"]) == 9
-    assert len(locations["parameters"]) == 1
+    locations = p.locations(select_properties=['00060'])
+    assert len(locations['features']) == 9
+    assert len(locations['parameters']) == 1
 
-    locations = p.locations(select_properties=["00010", "00060"])
-    assert len(locations["features"]) == 13
-    assert len(locations["parameters"]) == 2
+    locations = p.locations(select_properties=['00010', '00060'])
+    assert len(locations['features']) == 13
+    assert len(locations['parameters']) == 2
 
 
 def test_get_location(config):
     p = PostgresEDRProvider(config)
 
-    location = p.locations(location_id="USGS-01465798")
-    assert [k in location for k in ["type", "domain", "parameters", "ranges"]]
+    location = p.locations(location_id='USGS-01465798')
+    assert [k in location for k in ['type', 'domain', 'parameters', 'ranges']]
 
-    assert location["type"] == "Coverage"
+    assert location['type'] == 'Coverage'
 
-    domain = location["domain"]
-    assert domain["type"] == "Domain"
-    assert domain["domainType"] == "PointSeries"
+    domain = location['domain']
+    assert domain['type'] == 'Domain'
+    assert domain['domainType'] == 'PointSeries'
 
-    assert domain["axes"]["x"]["values"] == [-74.98516031202179]
-    assert domain["axes"]["y"]["values"] == [40.05695572943445]
-    assert domain["axes"]["t"]["values"] == [
+    assert domain['axes']['x']['values'] == [-74.98516031202179]
+    assert domain['axes']['y']['values'] == [40.05695572943445]
+    assert domain['axes']['t']['values'] == [
         datetime.date(2024, 12, 8),
         datetime.date(2024, 12, 5),
         datetime.date(2024, 12, 2),
@@ -242,25 +242,25 @@ def test_get_location(config):
         datetime.date(2024, 11, 17),
     ]
 
-    t_len = len(domain["axes"]["t"]["values"])
+    t_len = len(domain['axes']['t']['values'])
     assert t_len == 5
-    assert t_len == len(set(domain["axes"]["t"]["values"]))
+    assert t_len == len(set(domain['axes']['t']['values']))
 
-    assert [k in location for k in ["type", "domain", "parameters", "ranges"]]
+    assert [k in location for k in ['type', 'domain', 'parameters', 'ranges']]
 
-    for param in location["parameters"]:
-        assert param in location["ranges"]
+    for param in location['parameters']:
+        assert param in location['ranges']
 
-    for range in location["ranges"].values():
-        assert range["axisNames"][0] in domain["axes"]
-        assert range["shape"][0] == t_len
-        assert len(range["values"]) == t_len
-        assert range["values"] == [5.08, 5.22, 4.5, 6.94, 8.39]
+    for range in location['ranges'].values():
+        assert range['axisNames'][0] in domain['axes']
+        assert range['shape'][0] == t_len
+        assert len(range['values']) == t_len
+        assert range['values'] == [5.08, 5.22, 4.5, 6.94, 8.39]
 
 
 def test_locations_time(config):
     p = PostgresEDRProvider(config)
 
-    locations = p.locations(datetime_="2024-11-17")
-    assert len(locations["features"]) == 1
-    assert len(locations["parameters"]) == 1
+    locations = p.locations(datetime_='2024-11-17')
+    assert len(locations['features']) == 1
+    assert len(locations['parameters']) == 1

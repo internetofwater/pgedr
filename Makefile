@@ -17,3 +17,9 @@ dev:
 clean:
 	rm -rf .venv/
 	rm -rf .pytest_cache/
+
+test:
+	uv run pyright && uv run pytest
+
+check:
+	uv run pyright && uv run ruff check

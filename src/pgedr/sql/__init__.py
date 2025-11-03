@@ -26,7 +26,8 @@ from pgedr.sql.lib import get_column_from_qualified_name as gqname
 LOGGER = logging.getLogger(__name__)
 
 
-class EDRProvider(BaseEDRProvider, GenericSQLProvider):
+# flake8: noqa E501
+class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[reportIncompatibleMethodOverride] we ignore this since we are overriding a class with a query method that is not typed correctly
     """
     Generic provider for SQL EDR based on psycopg2
     using sync approach and server side
@@ -53,19 +54,19 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
 
         :returns: pygeoapi_sql_edr.edr.EDRProvider
         """
-        LOGGER.debug("Initialising EDR SQL provider.")
+        LOGGER.debug('Initialising EDR SQL provider.')
         # Flatten EDR fields
-        provider_def.update(**provider_def.get("edr_fields", {}))
+        provider_def.update(**provider_def.get('edr_fields', {}))
 
         BaseEDRProvider.__init__(self, provider_def)
         GenericSQLProvider.__init__(
             self, provider_def, driver_name, extra_conn_args
         )
 
-        LOGGER.debug("Adding external tables")
-        self.external_tables = provider_def.get("external_tables", {})
+        LOGGER.debug('Adding external tables')
+        self.external_tables = provider_def.get('external_tables', {})
         external_tables = [
-            table.split(".").pop() for table in self.external_tables
+            table.split('.').pop() for table in self.external_tables
         ]
         self.table_models = (self.table, *external_tables)
 
@@ -81,24 +82,24 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         self.tc = gqname(self.model, self.time_field)
         self.gc = gqname(self.model, self.geom)
 
-        self.parameter_id = provider_def.get("parameter_id", "parameter_id")
+        self.parameter_id = provider_def.get('parameter_id', 'parameter_id')
         self.pic = gqname(self.model, self.parameter_id)
 
         self.parameter_name = provider_def.get(
-            "parameter_name", "parameter_name"
+            'parameter_name', 'parameter_name'
         )
         self.pnc = gqname(self.model, self.parameter_name)
 
         self.parameter_unit = provider_def.get(
-            "parameter_unit", "parameter_unit"
+            'parameter_unit', 'parameter_unit'
         )
         self.puc = gqname(self.model, self.parameter_unit)
 
-        self.result_field = provider_def.get("result_field", "value")
+        self.result_field = provider_def.get('result_field', 'value')
         self.rc = gqname(self.model, self.result_field)
 
         self.location_field = provider_def.get(
-            "location_field", "monitoring_location_id"
+            'location_field', 'monitoring_location_id'
         )
         self.lc = gqname(self.model, self.location_field)
 
@@ -111,9 +112,9 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         :returns: dict of fields
         """
 
-        LOGGER.debug("Get available fields/properties")
+        LOGGER.debug('Get available fields/properties')
 
-        if not self._fields and hasattr(self, "parameter_id"):
+        if not self._fields and hasattr(self, 'parameter_id'):
             query = self._select(self.pic, self.pnc, self.puc).distinct(
                 self.pic
             )
@@ -121,9 +122,9 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
             with Session(self._engine) as session:
                 for pid, pname, punit in session.execute(query):
                     self._fields[str(pid)] = {
-                        "type": "number",
-                        "title": pname,
-                        "x-ogc-unit": punit,
+                        'type': 'number',
+                        'title': pname,
+                        'x-ogc-unit': punit,
                     }
 
         return self._fields
@@ -159,16 +160,21 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         parameter_filters = self._get_parameter_filters(select_properties)
         filters = [bbox_filter, parameter_filters, time_filter]
 
-        LOGGER.debug("Preparing response")
+        LOGGER.debug('Preparing response')
         parameters_names = set()
         response = {
-            "type": "FeatureCollection",
-            "features": [],
-            "parameters": [],
-            "numberReturned": 0,
+            'type': 'FeatureCollection',
+            'features': [],
+            'parameters': [],
+            'numberReturned': 0,
         }
 
         extraprops = [gqname(self.model, p).label(p) for p in self.properties]
+        if not isinstance(self, (PostgresEDRProvider, MySQLEDRProvider)):
+            raise ValueError(
+                'This provider does not support param aggregation'
+            )
+
         params = self._param_agg()
         location_query = (
             self._select(self.lc, self.gc, params)
@@ -183,16 +189,16 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
                 location_query
             ):
                 if isinstance(params, str):
-                    params = params.split(",")
+                    params = params.split(',')
 
-                response["numberReturned"] += 1
-                response["features"].append(
+                response['numberReturned'] += 1
+                response['features'].append(
                     self._sqlalchemy_to_feature(id, geom, params, extraprops)
                 )
                 parameters_names.update(params)
 
         if parameters_names:
-            response["parameters"] = self._get_parameters(
+            response['parameters'] = self._get_parameters(
                 parameters_names, aslist=True
             )
 
@@ -220,11 +226,13 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
 
         coverage = empty_coverage()
         ranges = {}
-        domain = coverage["domain"]
-        t_values = domain["axes"]["t"]["values"]
+        domain = coverage['domain']
+        t_values: list = domain['axes']['t']['values']
 
         parameter_filters = self._get_parameter_filters(select_properties)
-        select_parameters = set(select_properties or self._get_parameters())
+        select_parameters = set(
+            select_properties or self._get_parameters(set())
+        )
         time_filter = self._get_datetime_filter(datetime_)
         filters = [self.lc == location_id, parameter_filters, time_filter]
 
@@ -274,20 +282,20 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
                     if value is not None:
                         parameter_names.add(pname)
 
-                    ranges[pname]["values"].append(value)
-                    ranges[pname]["shape"][0] += 1
+                    ranges[pname]['values'].append(value)
+                    ranges[pname]['shape'][0] += 1
 
         if len(t_values) > 1:
-            domain["domainType"] += "Series"
+            domain['domainType'] += 'Series'
 
-        coverage["parameters"] = self._get_parameters(parameter_names)
-        coverage["ranges"] = {
+        coverage['parameters'] = self._get_parameters(parameter_names)
+        coverage['ranges'] = {
             k: ranges[k] for k in ranges if k in parameter_names
         }
 
         return coverage
 
-    def _sqlalchemy_to_feature(self, id, wkb_geom, params, properties=[]):
+    def _sqlalchemy_to_feature(self, id: str, wkb_geom, params, properties=[]):  # type: ignore We have to ignore this for now since the underlying function is inherited and harder to fix
         """
         Create GeoJSON of location.
 
@@ -299,15 +307,15 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         """
 
         feature = {
-            "type": "Feature",
-            "id": id,
-            "properties": {"parameters": params},
-            "geometry": read_geom(wkb_geom, as_geojson=True),
+            'type': 'Feature',
+            'id': id,
+            'properties': {'parameters': params},
+            'geometry': read_geom(wkb_geom, as_geojson=True),
         }
 
         if properties:
-            cleaned_properties = [p.split(".").pop() for p in self.properties]
-            feature["properties"].update(
+            cleaned_properties = [p.split('.').pop() for p in self.properties]
+            feature['properties'].update(
                 {k: v for (k, v) in zip(cleaned_properties, properties)}
             )
 
@@ -328,7 +336,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         filter_group = [self.pic == value for value in parameters]
         return or_(*filter_group)
 
-    def _get_parameters(self, parameters: set = {}, aslist=False):
+    def _get_parameters(self, parameters: set, aslist=False):
         """
         Generate parameters
 
@@ -338,24 +346,24 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         :returns: A dictionary containing the parameter definition.
         """
         if not parameters:
-            parameters = self.fields.keys()
+            parameters = set(self.fields.keys())
 
         out_params = {}
         for param in set(parameters):
             conf_ = self.fields[param]
             out_params[param] = {
-                "id": param,
-                "type": "Parameter",
-                "name": conf_["title"],
-                "observedProperty": {
-                    "id": param,
-                    "label": {"en": conf_["title"]},
+                'id': param,
+                'type': 'Parameter',
+                'name': conf_['title'],
+                'observedProperty': {
+                    'id': param,
+                    'label': {'en': conf_['title']},
                 },
-                "unit": {
-                    "label": {"en": conf_["title"]},
-                    "symbol": {
-                        "value": conf_["x-ogc-unit"],
-                        "type": "http://www.opengis.net/def/uom/UCUM/",
+                'unit': {
+                    'label': {'en': conf_['title']},
+                    'symbol': {
+                        'value': conf_['x-ogc-unit'],
+                        'type': 'http://www.opengis.net/def/uom/UCUM/',
                     },
                 },
             }
@@ -370,8 +378,8 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         """
         allowed = list()
         for ext_table, rel in self.external_tables.items():
-            if "." in ext_table:
-                parent, ext_table = ext_table.split(".", 1)
+            if '.' in ext_table:
+                parent, ext_table = ext_table.split('.', 1)
                 left, right = parent, ext_table
             else:
                 left, right = self.table, ext_table
@@ -379,12 +387,12 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
             table_model = self.base.classes[left]
             ext_table_model = self.base.classes[right]
 
-            foreign_key = gqname(table_model, rel["foreign"])
-            remote_key = gqname(ext_table_model, rel["remote"])
+            foreign_key = gqname(table_model, rel['foreign'])
+            remote_key = gqname(ext_table_model, rel['remote'])
             allowed.append((ext_table_model, foreign_key == remote_key))
 
             if hasattr(table_model, ext_table):
-                LOGGER.debug(f"{left} has existing relationship to {right}")
+                LOGGER.debug(f'{left} has existing relationship to {right}')
                 continue
 
             ext_relationship = relationship(
@@ -397,16 +405,16 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
 
         return tuple(allowed)
 
-    def _get_datetime_filter(self, datetime_):
-        if datetime_ in (None, "../.."):
+    def _get_datetime_filter(self, datetime_: Optional[str]):
+        if datetime_ in (None, '../..'):
             return True
         else:
-            if "/" in datetime_:  # envelope
-                LOGGER.debug("detected time range")
-                time_begin, time_end = datetime_.split("/")
-                if time_begin == "..":
+            if '/' in datetime_:  # envelope
+                LOGGER.debug('detected time range')
+                time_begin, time_end = datetime_.split('/')
+                if time_begin == '..':
                     datetime_filter = self.tc <= time_end
-                elif time_end == "..":
+                elif time_end == '..':
                     datetime_filter = self.tc >= time_begin
                 else:
                     datetime_filter = self.tc.between(time_begin, time_end)
@@ -431,12 +439,12 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):
         return (
             select(*selections)
             .select_from(self.model)
-            .with_joins(self.joins)
+            .with_joins(self.joins)  # type: ignore since we are monkeypatching this
             .filter(*filters)
         )
 
     def __repr__(self):
-        return f"<EDRProvider> {self.table}"
+        return f'<EDRProvider> {self.table}'
 
 
 class PostgresEDRProvider(EDRProvider):
@@ -457,10 +465,10 @@ class PostgresEDRProvider(EDRProvider):
         :returns: pygeoapi.provider.sql.PostgreSQLProvider
         """
 
-        driver_name = "postgresql+psycopg2"
+        driver_name = 'postgresql+psycopg2'
         extra_conn_args = {
-            "client_encoding": "utf8",
-            "application_name": "pygeoapi",
+            'client_encoding': 'utf8',
+            'application_name': 'pygeoapi',
         }
         super().__init__(provider_def, driver_name, extra_conn_args)
 
@@ -500,7 +508,7 @@ class PostgresEDRProvider(EDRProvider):
         """
         Create the aggregation function for parameters
         """
-        return func.array_agg(distinct(self.pic)).label("parameters")
+        return func.array_agg(distinct(self.pic)).label('parameters')
 
 
 class MySQLEDRProvider(EDRProvider):
@@ -521,8 +529,8 @@ class MySQLEDRProvider(EDRProvider):
         :returns: pygeoapi.provider.sql.MySQLProvider
         """
 
-        driver_name = "mysql+pymysql"
-        extra_conn_args = {"charset": "utf8mb4"}
+        driver_name = 'mysql+pymysql'
+        extra_conn_args = {'charset': 'utf8mb4'}
         super().__init__(provider_def, driver_name, extra_conn_args)
 
     def _get_bbox_filter(self, bbox: list[float]):
@@ -538,7 +546,7 @@ class MySQLEDRProvider(EDRProvider):
 
         # Create WKT POLYGON from bbox: (minx, miny, maxx, maxy)
         minx, miny, maxx, maxy = bbox
-        polygon_wkt = f"POLYGON(({minx} {miny}, {maxx} {miny}, {maxx} {maxy}, {minx} {maxy}, {minx} {miny}))"  # noqa
+        polygon_wkt = f'POLYGON(({minx} {miny}, {maxx} {miny}, {maxx} {maxy}, {minx} {maxy}, {minx} {miny}))'  # noqa
         # Use MySQL MBRContains for index-accelerated bounding box checks
         bbox_filter = func.MBRContains(
             func.ST_GeomFromText(polygon_wkt), self.gc
@@ -568,4 +576,4 @@ class MySQLEDRProvider(EDRProvider):
         """
         Create the aggregation function for parameters
         """
-        return func.GROUP_CONCAT(distinct(self.pic)).label("parameters")
+        return func.GROUP_CONCAT(distinct(self.pic)).label('parameters')
