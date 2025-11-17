@@ -438,9 +438,25 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         """
 
         tables = set([selection.table for selection in selections])
-        if len(tables) == 1 and all(f is True for f in filters):
+        is_single_table = len(tables) == 1
+        actual_filters = [f for f in filters if f is not True]
+
+        # Simple case: single table with no filters
+        if is_single_table and actual_filters == []:
             return select(*selections)
 
+        # Single table with filters that belong to that table
+        filters_match_table = all(
+            hasattr(f, 'left')
+            and hasattr(f.left, 'table')
+            and f.left.table in tables
+            for f in actual_filters
+        )
+
+        if is_single_table and filters_match_table:
+            return select(*selections).filter(*actual_filters)
+
+        # Complex case: multiple tables or cross-table filters - need joins
         return (
             select(*selections)
             .select_from(self.model)
