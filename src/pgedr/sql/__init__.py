@@ -11,6 +11,7 @@ from sqlalchemy import func, select, distinct
 from sqlalchemy.orm import Session, relationship, aliased
 from sqlalchemy.sql.expression import or_
 
+from pygeoapi.provider.base import ProviderItemNotFoundError
 from pygeoapi.provider.base_edr import BaseEDRProvider
 from pygeoapi.provider.sql import GenericSQLProvider
 
@@ -267,7 +268,11 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
 
         with Session(self._engine) as session:
             geom = session.execute(location_query).scalar()
-            apply_domain_geometry(domain, geom)
+            if geom:
+                apply_domain_geometry(domain, geom)
+            else:
+                msg = f'Location not found: {location_id}'
+                raise ProviderItemNotFoundError(msg)
 
             # Construct the query
             parameter_names = set()
