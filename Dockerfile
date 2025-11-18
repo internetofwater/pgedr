@@ -6,7 +6,7 @@ FROM geopython/pygeoapi:latest
 COPY *.toml *.yml /pgedr/
 COPY src/ /pgedr/src/
 
-RUN pip install -e /pgedr
+RUN /venv/bin/python3 -m pip install -e /pgedr
 
 ENV PYGEOAPI_CONFIG=/pgedr/pygeoapi.config.yml
 ENV PYGEOAPI_OPENAPI=/pgedr/pygeoapi.openapi.yml

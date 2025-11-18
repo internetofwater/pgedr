@@ -11,6 +11,7 @@ from sqlalchemy import func, select, distinct
 from sqlalchemy.orm import Session, relationship, aliased
 from sqlalchemy.sql.expression import or_
 
+from pygeoapi.provider.base import ProviderItemNotFoundError
 from pygeoapi.provider.base_edr import BaseEDRProvider
 from pygeoapi.provider.sql import GenericSQLProvider
 
@@ -267,7 +268,9 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
 
         with Session(self._engine) as session:
             geom = session.execute(location_query).scalar()
-            apply_domain_geometry(domain, geom)
+            if not geom:
+                msg = f'Location not found: {location_id}'
+                raise ProviderItemNotFoundError(msg)
 
             # Construct the query
             parameter_names = set()
@@ -284,6 +287,8 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
 
                     ranges[pname]['values'].append(value)
                     ranges[pname]['shape'][0] += 1
+
+        apply_domain_geometry(domain, geom)
 
         if len(t_values) > 1:
             domain['domainType'] += 'Series'
@@ -422,7 +427,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
                 datetime_filter = self.tc == datetime_
         return datetime_filter
 
-    def _select(self, *selections, filters=[True]):
+    def _select(self, *selections, filters=[]):
         """
         Generate select
 
@@ -432,10 +437,17 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         :returns: A SQL Alchemy select statement.
         """
 
-        tables = set([selection.table for selection in selections])
-        if len(tables) == 1 and all(f is True for f in filters):
+        tables = set(
+            [selection.table for selection in selections]
+            + [f.left.table for f in filters if hasattr(f, 'left')]
+        )
+        is_single_table = len(tables) == 1
+
+        # Simple case: single table
+        if is_single_table and filters == []:
             return select(*selections)
 
+        # Complex case: multiple tables or cross-table filters - need joins
         return (
             select(*selections)
             .select_from(self.model)

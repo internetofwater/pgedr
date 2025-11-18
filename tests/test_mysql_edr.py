@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session, InstrumentedAttribute
 import datetime
 import pytest
 
+from pygeoapi.provider.base import ProviderItemNotFoundError
+
 from pgedr import MySQLEDRProvider
 from pgedr.sql.lib import get_column_from_qualified_name as gqname
 from pgedr.sql.lib import recursive_getattr as rgetattr
@@ -232,6 +234,16 @@ def test_get_location(config):
         assert range['shape'][0] == t_len
         assert len(range['values']) == t_len
         assert range['values'] == [88, 87, 85, 90, 89]
+
+
+def test_invalid_location(config):
+    p = MySQLEDRProvider(config)
+
+    with pytest.raises(ProviderItemNotFoundError):
+        p.locations(location_id='INVALID_LOC')
+
+    with pytest.raises(ProviderItemNotFoundError):
+        p.locations(location_id='CGS')
 
 
 def test_locations_time(config):

@@ -52,11 +52,10 @@ metadata:
     name: Benjamin Webb
 
 resources:
-
   example_quickstart:
     type: collection
     title:
-      en: Example Quickstart 
+      en: Example Quickstart
     description:
       en: An example quickstart based on a generic, reusable schema
     keywords:
@@ -89,7 +88,7 @@ resources:
           password: ${POSTGRES_PASSWORD}
           search_path: [edr_quickstart]
         table: observations
-    
+
         edr_fields: # Required EDR Fields
           id_field: observation_id
           location_field: locations.location_id
@@ -107,7 +106,6 @@ resources:
           parameters:
             remote: parameter_id
             foreign: parameter_id
-
 
   timeseries-metadata:
     type: collection
@@ -240,3 +238,17 @@ resources:
           airport_parameters:
             foreign: parameter_id
             remote: id
+
+      - type: feature
+        name: MySQL
+        data:
+          host: ${MYSQL_HOST}
+          dbname: ${MYSQL_DATABASE}
+          user: ${MYSQL_USER}
+          port: ${MYSQL_PORT}
+          password: ${MYSQL_PASSWORD}
+          search_path:
+            - ${MYSQL_DATABASE}
+        table: airport_locations
+        id_field: id
+        geom_field: geometry_wkt

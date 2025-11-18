@@ -5,7 +5,10 @@ from sqlalchemy.orm import Session, InstrumentedAttribute
 import datetime
 import pytest
 
-from pygeoapi.provider.base import ProviderInvalidDataError
+from pygeoapi.provider.base import (
+    ProviderInvalidDataError,
+    ProviderItemNotFoundError,
+)
 
 from pgedr import PostgresEDRProvider
 from pgedr.sql.lib import get_column_from_qualified_name as gqname
@@ -256,6 +259,13 @@ def test_get_location(config):
         assert range['shape'][0] == t_len
         assert len(range['values']) == t_len
         assert range['values'] == [5.08, 5.22, 4.5, 6.94, 8.39]
+
+
+def test_invalid_location(config):
+    p = PostgresEDRProvider(config)
+
+    with pytest.raises(ProviderItemNotFoundError):
+        p.locations(location_id='USGS-99999999')
 
 
 def test_locations_time(config):
