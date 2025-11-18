@@ -268,9 +268,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
 
         with Session(self._engine) as session:
             geom = session.execute(location_query).scalar()
-            if geom:
-                apply_domain_geometry(domain, geom)
-            else:
+            if not geom:
                 msg = f'Location not found: {location_id}'
                 raise ProviderItemNotFoundError(msg)
 
@@ -289,6 +287,8 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
 
                     ranges[pname]['values'].append(value)
                     ranges[pname]['shape'][0] += 1
+
+        apply_domain_geometry(domain, geom)
 
         if len(t_values) > 1:
             domain['domainType'] += 'Series'
@@ -427,7 +427,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
                 datetime_filter = self.tc == datetime_
         return datetime_filter
 
-    def _select(self, *selections, filters=[True]):
+    def _select(self, *selections, filters=[]):
         """
         Generate select
 
@@ -437,24 +437,15 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         :returns: A SQL Alchemy select statement.
         """
 
-        tables = set([selection.table for selection in selections])
-        is_single_table = len(tables) == 1
-        actual_filters = [f for f in filters if f is not True]
-
-        # Simple case: single table with no filters
-        if is_single_table and actual_filters == []:
-            return select(*selections)
-
-        # Single table with filters that belong to that table
-        filters_match_table = all(
-            hasattr(f, 'left')
-            and hasattr(f.left, 'table')
-            and f.left.table in tables
-            for f in actual_filters
+        tables = set(
+            [selection.table for selection in selections]
+            + [f.left.table for f in filters if hasattr(f, 'left')]
         )
+        is_single_table = len(tables) == 1
 
-        if is_single_table and filters_match_table:
-            return select(*selections).filter(*actual_filters)
+        # Simple case: single table
+        if is_single_table and filters == []:
+            return select(*selections)
 
         # Complex case: multiple tables or cross-table filters - need joins
         return (

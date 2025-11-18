@@ -42,7 +42,7 @@ function error() {
 cd ${PYGEOAPI_HOME}
 
 echo "Trying to generate openapi.yml"
-pygeoapi openapi generate ${PYGEOAPI_CONFIG} --output-file ${PYGEOAPI_OPENAPI}
+/venv/bin/pygeoapi openapi generate ${PYGEOAPI_CONFIG} --output-file ${PYGEOAPI_OPENAPI}
 
 [[ $? -ne 0 ]] && error "openapi.yml could not be generated ERROR"
 
@@ -53,7 +53,7 @@ start_gunicorn() {
 	[[ "${SCRIPT_NAME}" = '/' ]] && export SCRIPT_NAME="" && echo "make SCRIPT_NAME empty from /"
 
 	echo "Starting gunicorn name=${CONTAINER_NAME} on ${CONTAINER_HOST}:${CONTAINER_PORT} with ${WSGI_WORKERS} workers and SCRIPT_NAME=${SCRIPT_NAME}"
-	exec gunicorn --workers ${WSGI_WORKERS} \
+	exec /venv/bin/gunicorn --workers ${WSGI_WORKERS} \
 		--worker-class=${WSGI_WORKER_CLASS} \
 		--timeout ${WSGI_WORKER_TIMEOUT} \
 		--name=${CONTAINER_NAME} \
