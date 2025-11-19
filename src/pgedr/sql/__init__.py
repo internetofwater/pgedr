@@ -123,7 +123,9 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
             query = self._select(self.pic, self.pnc, self.puc).distinct(
                 self.pic
             )
-            with TRACER.start_as_current_span('execute_get_fields_query') as span:
+            with TRACER.start_as_current_span(
+                'execute_get_fields_query'
+            ) as span:
                 with Session(self._engine) as session:
                     result = session.execute(query)
                     span.set_attribute('sql.query', query.compile().string)
@@ -167,10 +169,9 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
 
         args = (select_properties, bbox, datetime_, limit)
         span = trace.get_current_span()
-        for arg in args:    
+        for arg in args:
             span.set_attribute(f'locations.arg.{arg}', str(arg))
 
-        
         bbox_filter = self._get_bbox_filter(bbox)
         time_filter = self._get_datetime_filter(datetime_)
         parameter_filters = self._get_parameter_filters(select_properties)

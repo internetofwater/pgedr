@@ -13,12 +13,13 @@ import inspect
 
 _otel_initialized = False
 
+
 def init_otel():
     """Initialize the open telemetry config"""
     global _otel_initialized
-    # Guard clause to prevent multiple initializations; should never be called; here
-    # to prevent accidental double initialization in future
-    assert not _otel_initialized, "OpenTelemetry has already been initialized"
+    # Guard clause to prevent multiple initializations; should never be called;
+    # here to prevent accidental double initialization in future
+    assert not _otel_initialized, 'OpenTelemetry has already been initialized'
     _otel_initialized = True
 
     resource = Resource(
@@ -50,14 +51,17 @@ TRACER = trace.get_tracer('pgedr_tracer')
 
 
 def otel_trace():
-    """Decorator to automatically set the span name using the file and function name."""
+    """
+    Decorator to automatically set the span name using the file
+    and function name.
+    """
 
     def decorator(func):
         filename = os.path.splitext(os.path.basename(inspect.getfile(func)))[0]
 
         # don't add __init__ to span names for the sake of reducing noise
         # i.e pgedr is a more useful name than pgedr.__init__
-        prefix = '' if filename == '__init__' else f"{filename}."
+        prefix = '' if filename == '__init__' else f'{filename}.'
         span_name = f'{prefix}{func.__name__}'
 
         @functools.wraps(func)
@@ -73,7 +77,7 @@ def otel_trace():
 def add_args_as_attributes_to_span():
     """
     Inspect the caller's frame and add all arguments (except `self`)
-    as attributes on the current OpenTelemetry span; useful for 
+    as attributes on the current OpenTelemetry span; useful for
     debugging to see what arguments were passed to a function.
     """
     span = trace.get_current_span()
@@ -87,11 +91,11 @@ def add_args_as_attributes_to_span():
         current_frame = inspect.currentframe()
         if not current_frame:
             return
-        
+
         callee_frame = current_frame.f_back
         if not callee_frame:
             return
-        
+
         # Get local variables of the calling function
         args = callee_frame.f_locals
 
