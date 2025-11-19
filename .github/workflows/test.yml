@@ -3,7 +3,9 @@
 
 name: Test Provider ⚙️
 
-on: [push, pull_request]
+on:
+  push:
+  workflow_dispatch: # Allows manual triggering of the workflow
 
 jobs:
   main:
