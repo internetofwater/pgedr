@@ -1,5 +1,3 @@
-include .env
-
 # install dependencies
 # this project uses uv to manage dependencies
 deps:

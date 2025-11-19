@@ -6,6 +6,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    environment:
+      # if we are running pygeoapi via the dockerfile
+      # we should assume that jaeger is also running in the compose network
+      - COLLECTOR_ENDPOINT=jaeger
+      - COLLECTOR_GRPC_PORT=4317
     env_file:
       - .env
     ports:
@@ -48,3 +53,15 @@ services:
       timeout: 30s
       retries: 5
       start_period: 30s
+
+  jaeger:
+    image: jaegertracing/all-in-one
+    ports:
+      # Ports defined here https://www.jaegertracing.io/docs/next-release/getting-started/#all-in-one
+      - "16686:16686" # expose the UI
+      - "4317:4317" # expose the OTLP HTTP port
+    environment:
+      - LOG_LEVEL=debug
+    restart: on-failure
+    profiles:
+      - tracing

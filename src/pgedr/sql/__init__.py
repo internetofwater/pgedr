@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 import logging
+from opentelemetry import trace
 
 from geoalchemy2 import Geometry  # noqa - this isn't used explicitly but is needed to process Geometry columns
 from geoalchemy2.functions import ST_MakeEnvelope
@@ -21,6 +22,7 @@ from pgedr.lib import (
     apply_domain_geometry,
     read_geom,
 )
+from pgedr.otel import TRACER, add_args_as_attributes_to_span, otel_trace
 from pgedr.sql.lib import get_base_schema
 from pgedr.sql.lib import get_column_from_qualified_name as gqname
 
@@ -35,6 +37,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
     cursor (using support class DatabaseCursor)
     """
 
+    @otel_trace()
     def __init__(
         self,
         provider_def: dict,
@@ -106,6 +109,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
 
         self.get_fields()
 
+    @otel_trace()
     def get_fields(self):
         """
         Return fields (columns) from SQL table
@@ -119,9 +123,12 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
             query = self._select(self.pic, self.pnc, self.puc).distinct(
                 self.pic
             )
+            with TRACER.start_as_current_span('execute_get_fields_query') as span:
+                with Session(self._engine) as session:
+                    result = session.execute(query)
+                    span.set_attribute('sql.query', query.compile().string)
 
-            with Session(self._engine) as session:
-                for pid, pname, punit in session.execute(query):
+                for pid, pname, punit in result:
                     self._fields[str(pid)] = {
                         'type': 'number',
                         'title': pname,
@@ -130,6 +137,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
 
         return self._fields
 
+    @otel_trace()
     def locations(
         self,
         location_id: Optional[str] = None,
@@ -150,12 +158,19 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
 
         :returns: A GeoJSON FeatureCollection of locations.
         """
+        add_args_as_attributes_to_span()
 
         if location_id:
             return self.location(
                 location_id, select_properties, datetime_, limit
             )
 
+        args = (select_properties, bbox, datetime_, limit)
+        span = trace.get_current_span()
+        for arg in args:    
+            span.set_attribute(f'locations.arg.{arg}', str(arg))
+
+        
         bbox_filter = self._get_bbox_filter(bbox)
         time_filter = self._get_datetime_filter(datetime_)
         parameter_filters = self._get_parameter_filters(select_properties)
@@ -177,18 +192,20 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
             )
 
         params = self._param_agg()
-        location_query = (
-            self._select(self.lc, self.gc, params)
-            .filter(*filters)
-            .group_by(self.lc, self.gc, *extraprops)
-            .add_columns(*extraprops)
-            .limit(limit)
-        )
+        with TRACER.start_as_current_span('build_location_query') as span:
+            location_query = (
+                self._select(self.lc, self.gc, params)
+                .filter(*filters)
+                .group_by(self.lc, self.gc, *extraprops)
+                .add_columns(*extraprops)
+                .limit(limit)
+            )
+            span.set_attribute('sql.query', location_query.compile().string)
 
         with Session(self._engine) as session:
-            for id, geom, params, *extraprops in session.execute(
-                location_query
-            ):
+            with TRACER.start_as_current_span('execute_location_query'):
+                result = session.execute(location_query)
+            for id, geom, params, *extraprops in result:
                 if isinstance(params, str):
                     params = params.split(',')
 
@@ -205,6 +222,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
 
         return response
 
+    @otel_trace()
     def location(
         self,
         location_id: str,
@@ -238,12 +256,14 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         filters = [self.lc == location_id, parameter_filters, time_filter]
 
         # Create the main query to fetch data
-        results = (
-            self._select(self.tc, filters=filters)
-            .distinct()
-            .order_by(self.tc.desc())
-            .limit(limit)
-        )
+        with TRACER.start_as_current_span('build_location_query') as span:
+            results = (
+                self._select(self.tc, filters=filters)
+                .distinct()
+                .order_by(self.tc.desc())
+                .limit(limit)
+            )
+            span.set_attribute('sql.query', results.compile().string)
 
         # Create select columns for each parameter
         for parameter in select_parameters:
@@ -262,31 +282,33 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
             ).add_columns(rc)
 
         # Get the geometry of the location
-        location_query = self._select(
-            self.gc, filters=[self.lc == location_id]
-        ).limit(1)
+        with TRACER.start_as_current_span('execute_location_query') as span:
+            location_query = self._select(
+                self.gc, filters=[self.lc == location_id]
+            ).limit(1)
+            span.set_attribute('sql.query', location_query.compile().string)
 
-        with Session(self._engine) as session:
-            geom = session.execute(location_query).scalar()
-            if not geom:
-                msg = f'Location not found: {location_id}'
-                raise ProviderItemNotFoundError(msg)
+            with Session(self._engine) as session:
+                geom = session.execute(location_query).scalar()
+                if not geom:
+                    msg = f'Location not found: {location_id}'
+                    raise ProviderItemNotFoundError(msg)
 
-            # Construct the query
-            parameter_names = set()
-            for row in session.execute(results):
-                row = row._asdict()
+                # Construct the query
+                parameter_names = set()
+                for row in session.execute(results):
+                    row = row._asdict()
 
-                # Add time value to domain
-                t_values.append(row.pop(self.time_field))
+                    # Add time value to domain
+                    t_values.append(row.pop(self.time_field))
 
-                # Add parameter values to ranges
-                for pname, value in row.items():
-                    if value is not None:
-                        parameter_names.add(pname)
+                    # Add parameter values to ranges
+                    for pname, value in row.items():
+                        if value is not None:
+                            parameter_names.add(pname)
 
-                    ranges[pname]['values'].append(value)
-                    ranges[pname]['shape'][0] += 1
+                        ranges[pname]['values'].append(value)
+                        ranges[pname]['shape'][0] += 1
 
         apply_domain_geometry(domain, geom)
 
@@ -326,6 +348,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
 
         return feature
 
+    @otel_trace()
     def _get_parameter_filters(self, parameters):
         """
         Generate parameter filters
@@ -341,6 +364,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         filter_group = [self.pic == value for value in parameters]
         return or_(*filter_group)
 
+    @otel_trace()
     def _get_parameters(self, parameters: set, aslist=False):
         """
         Generate parameters
@@ -375,6 +399,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
 
         return list(out_params.values()) if aslist else out_params
 
+    @otel_trace()
     def _get_relationships(self):
         """
         Generate SQL table joins
@@ -427,6 +452,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
                 datetime_filter = self.tc == datetime_
         return datetime_filter
 
+    @otel_trace()
     def _select(self, *selections, filters=[]):
         """
         Generate select
