@@ -11,9 +11,16 @@ from opentelemetry.sdk.resources import Resource
 import functools
 import inspect
 
+_otel_initialized = False
 
 def init_otel():
     """Initialize the open telemetry config"""
+    global _otel_initialized
+    # Guard clause to prevent multiple initializations; should never be called; here
+    # to prevent accidental double initialization in future
+    assert not _otel_initialized, "OpenTelemetry has already been initialized"
+    _otel_initialized = True
+
     resource = Resource(
         attributes={'service.name': os.getenv('OTEL_SERVICE_NAME', 'pgedr')}
     )
