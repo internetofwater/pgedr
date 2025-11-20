@@ -324,6 +324,12 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
                 {k: v for (k, v) in zip(cleaned_properties, properties)}
             )
 
+            nested_properties = feature['properties'].get('properties')
+            if nested_properties and isinstance(nested_properties, dict):
+                feature['properties'].update(
+                    feature['properties'].pop('properties')
+                )
+
         return feature
 
     def _get_parameter_filters(self, parameters):
