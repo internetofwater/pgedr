@@ -869,6 +869,13 @@ dependencies = [
     { name = "pymysql" },
 ]
 
+[package.optional-dependencies]
+tracing = [
+    { name = "opentelemetry-api" },
+    { name = "opentelemetry-exporter-otlp-proto-grpc" },
+    { name = "opentelemetry-sdk" },
+]
+
 [package.dev-dependencies]
 dev = [
     { name = "pyright" },
@@ -876,21 +883,20 @@ dev = [
     { name = "pytest-cov" },
     { name = "ruff" },
 ]
-tracing = [
-    { name = "opentelemetry-api" },
-    { name = "opentelemetry-exporter-otlp-proto-grpc" },
-    { name = "opentelemetry-sdk" },
-]
 
 [package.metadata]
 requires-dist = [
     { name = "cryptography", specifier = ">=44.0.3" },
     { name = "geoalchemy2" },
+    { name = "opentelemetry-api", marker = "extra == 'tracing'", specifier = ">=1.38.0" },
+    { name = "opentelemetry-exporter-otlp-proto-grpc", marker = "extra == 'tracing'", specifier = ">=1.38.0" },
+    { name = "opentelemetry-sdk", marker = "extra == 'tracing'", specifier = ">=1.38.0" },
     { name = "psycopg2" },
     { name = "pydantic" },
     { name = "pygeoapi", specifier = ">=0.21.0" },
     { name = "pymysql", specifier = ">=1.1.1" },
 ]
+provides-extras = ["tracing"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -898,11 +904,6 @@ dev = [
     { name = "pytest", specifier = ">=8.4.2" },
     { name = "pytest-cov", specifier = ">=7.0.0" },
     { name = "ruff", specifier = ">=0.14.0" },
-]
-tracing = [
-    { name = "opentelemetry-api", specifier = ">=1.38.0" },
-    { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = ">=1.38.0" },
-    { name = "opentelemetry-sdk", specifier = ">=1.38.0" },
 ]
 
 [[package]]
