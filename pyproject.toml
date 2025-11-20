@@ -53,6 +53,11 @@ dev = [
     "pytest-cov>=7.0.0",
     "ruff>=0.14.0",
 ]
+tracing = [
+    "opentelemetry-api>=1.38.0",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.38.0",
+    "opentelemetry-sdk>=1.38.0",
+]
 
 [tool.pytest.ini_options]
 addopts = "--cov=pgedr"
