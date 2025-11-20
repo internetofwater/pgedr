@@ -3,6 +3,10 @@
 deps:
 	uv sync --all-groups --locked --all-packages
 
+# uv sync does not add extras by default; thus we specify tracing as a separate command
+deps_with_tracing:
+	uv sync --all-groups --locked --all-packages --extra tracing
+
 database:
 	docker compose up --build -d database
 	docker compose up --build -d mysql
