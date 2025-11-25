@@ -12,18 +12,18 @@ to the [docs](https://docs.pygeoapi.io/en/latest/configuration.html).
 
 - The `table` field represents the top level table that all joins are relative to
 - The `edr_fields` section defines the columns of your SQL table and their corresponding field in OGC API - EDR.
-    - Fields are defined in the format `TABLE.COLUMN`
-- The `external_tables` section allows foriegn table joins to allow `edr_fields` to refer to any table/column with a mapped relationship to the primary table. 
-  - `foreign` is the column in the primary table defined in the `table` field 
+  - Fields are defined in the format `TABLE.COLUMN`
+- The `external_tables` section allows foriegn table joins to allow `edr_fields` to refer to any table/column with a mapped relationship to the primary table.
+  - `foreign` is the column in the primary table defined in the `table` field
   - `remote` is the column in the foreign table defined in the `external_tables`
-      - Example: The config below describes a schema with a table named `locations`. Its has a key `observation_id_in_locations_table` which is a reference and we can join this to the primary table `observations` using the `observation_id` column.
-      ```yml
-        external_tables:
-          locations:
-            remote: observation_id_in_locations_table
-            foreign: observation_id
-      ```
-      In many cases, the `foreign` and `remote` fields will be the same if you want to join the same key name from the primary table to the foreign table. (i.e. if you have a `observation_id` field in the primary table and `observation_id` field in the table for locations that associates the two)
+    - Example: The config below describes a schema with a table named `locations`. Its has a key `observation_id_in_locations_table` which is a reference and we can join this to the primary table `observations` using the `observation_id` column.
+    ```yml
+    external_tables:
+      locations:
+        remote: observation_id_in_locations_table
+        foreign: observation_id
+    ```
+    In many cases, the `foreign` and `remote` fields will be the same if you want to join the same key name from the primary table to the foreign table. (i.e. if you have a `observation_id` field in the primary table and `observation_id` field in the table for locations that associates the two)
 
 ### Postgres
 

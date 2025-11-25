@@ -275,13 +275,13 @@ def test_locations_time(config):
     assert len(locations['features']) == 1
     assert len(locations['parameters']) == 1
 
+
 def test_expand_properties(config):
     p = PostgresEDRProvider(config)
 
     locations = p.locations(datetime_='2024-11-17')
     assert len(locations['features']) == 1
     assert len(locations['parameters']) == 1
-
 
 
 @pytest.fixture()
@@ -316,7 +316,7 @@ def quickstart_config(request):
             'parameters': {
                 'foreign': 'parameter_id',
                 'remote': 'parameter_id',
-            }
+            },
         },
     }
     return pygeoapi_config
@@ -329,5 +329,7 @@ def test_jsonb_property_expansion(quickstart_config):
 
     locations = p.locations()
     for loc in locations['features']:
-        assert 'properties' not in loc["properties"]
-        assert 'type' in loc["properties"], 'type should be directly in the properties field'
+        assert 'properties' not in loc['properties']
+        assert 'type' in loc['properties'], (
+            'type should be directly in the properties field'
+        )
