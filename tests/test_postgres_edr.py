@@ -274,3 +274,62 @@ def test_locations_time(config):
     locations = p.locations(datetime_='2024-11-17')
     assert len(locations['features']) == 1
     assert len(locations['parameters']) == 1
+
+
+def test_expand_properties(config):
+    p = PostgresEDRProvider(config)
+
+    locations = p.locations(datetime_='2024-11-17')
+    assert len(locations['features']) == 1
+    assert len(locations['parameters']) == 1
+
+
+@pytest.fixture()
+def quickstart_config(request):
+    pygeoapi_config = {
+        'name': 'PostgresEDRProvider',
+        'type': 'edr',
+        'data': {
+            'host': 'localhost',
+            'dbname': 'edr',
+            'user': 'postgres',
+            'password': 'changeMe',
+            'search_path': ['edr_quickstart'],
+        },
+        'table': 'observations',
+        'properties': ['locations.properties'],
+        'edr_fields': {
+            'id_field': 'observation_id',
+            'location_field': 'locations.location_id',
+            'geom_field': 'locations.geometry',
+            'time_field': 'observation_time',
+            'result_field': 'observation_value',
+            'parameter_id': 'parameters.parameter_id',
+            'parameter_name': 'parameters.parameter_unit_label',
+            'parameter_unit': 'parameters.parameter_unit_symbol',
+        },
+        'external_tables': {
+            'locations': {
+                'foreign': 'location_id',
+                'remote': 'location_id',
+            },
+            'parameters': {
+                'foreign': 'parameter_id',
+                'remote': 'parameter_id',
+            },
+        },
+    }
+    return pygeoapi_config
+
+
+def test_jsonb_property_expansion(quickstart_config):
+    """Ensure 'properties' is expanded and there is not a duplicate
+    nested properties key"""
+    p = PostgresEDRProvider(quickstart_config)
+
+    locations = p.locations()
+    for loc in locations['features']:
+        assert 'properties' not in loc['properties']
+        assert 'type' in loc['properties'], (
+            'type should be directly in the properties field'
+        )

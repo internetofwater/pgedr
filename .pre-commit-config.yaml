@@ -44,7 +44,7 @@ repos:
       - id: ruff
         args: ["--fix", "--line-length=79"]
       - id: ruff-format
-        args: ["--line-length=79", "--config format.quote-style='single'"]
+        args: ["--line-length=79", "--config", 'format.quote-style="single"']
   - repo: https://github.com/astral-sh/uv-pre-commit
     # uv version.
     rev: 0.6.3
