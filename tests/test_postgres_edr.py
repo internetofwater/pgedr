@@ -74,6 +74,13 @@ def test_invalid_config(config):
         PostgresEDRProvider(config)
 
 
+def test_bad_location_id(config):
+    p = PostgresEDRProvider(config)
+
+    with pytest.raises(ProviderItemNotFoundError):
+        p.locations(location_id="USGS-01465791")
+
+
 def test_external_table_relationships(config):
     p = PostgresEDRProvider(config)
 

@@ -3,9 +3,9 @@
 
 import logging
 
-from geoalchemy2 import Geometry  # noqa - this isn't used explicitly but is needed to process Geometry columns
+from geoalchemy2 import WKTElement, Geometry  # noqa - this isn't used explicitly but is needed to process Geometry columns
 from geoalchemy2.functions import ST_MakeEnvelope
-from typing import Optional
+from typing import Optional, Any
 
 from sqlalchemy import func, select, distinct
 from sqlalchemy.orm import Session, relationship, aliased
@@ -14,9 +14,11 @@ from sqlalchemy.sql.expression import or_
 from pygeoapi.provider.base import ProviderItemNotFoundError
 from pygeoapi.provider.base_edr import BaseEDRProvider
 from pygeoapi.provider.sql import GenericSQLProvider
+from pygeoapi.util import get_crs_from_uri
 
 from pgedr.lib import (
     empty_coverage,
+    empty_coverage_collection,
     empty_range,
     apply_domain_geometry,
     read_geom,
@@ -152,9 +154,25 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         """
 
         if location_id:
-            return self.location(
-                location_id, select_properties, datetime_, limit
-            )
+            # Get the geometry of the location
+            location_query = self._select(
+                self.gc, filters=[self.lc == location_id]
+            ).limit(1)
+
+            with Session(self._engine) as session:
+                geom = session.execute(location_query).scalar()
+                if not geom:
+                    msg = f"Location not found: {location_id}"
+                    raise ProviderItemNotFoundError(msg)
+
+                return self.location(
+                    location_id,
+                    geom,
+                    session,
+                    select_properties,
+                    datetime_,
+                    limit,
+                )
 
         bbox_filter = self._get_bbox_filter(bbox)
         time_filter = self._get_datetime_filter(datetime_)
@@ -205,9 +223,121 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
 
         return response
 
+    def cube(
+        self,
+        bbox: list,
+        datetime_: Optional[str] = None,
+        select_properties: Optional[list] = None,
+        limit: int = 100,
+        format_: Optional[str] = None,
+        **kwargs,
+    ):
+        """
+        Extract and return location from SQL table.
+
+        :param bbox: Bounding box geometry for spatial queries.
+        :param datetime_: Temporal filter for observations.
+        :param select_properties: List of properties to include.
+        :param limit: number of records to return (default 100)
+
+        :returns: A GeoJSON FeatureCollection of locations.
+        """
+
+        bbox_filter = self._get_bbox_filter(bbox)
+        time_filter = self._get_datetime_filter(datetime_)
+        parameter_filters = self._get_parameter_filters(select_properties)
+        filters = [bbox_filter, parameter_filters, time_filter]
+
+        coverage_collection = empty_coverage_collection()
+
+        location_query = (
+            self._select(self.lc, self.gc, filters=filters)
+            .distinct(self.lc)
+            .limit(limit)
+        )
+
+        parameters = set()
+        with Session(self._engine) as session:
+            for location_id, geom in session.execute(location_query):
+                LOGGER.error(f"Fetching coverage for {location_id}")
+                coverage = self.location(
+                    location_id,
+                    geom,
+                    session,
+                    select_properties,
+                    datetime_,
+                    limit,
+                )
+                coverage["domain"].pop("referencing")
+                parameters.update(coverage.pop("parameters"))
+                coverage_collection["coverages"].append(coverage)
+
+        coverage_collection["parameters"] = self._get_parameters(parameters)
+        return coverage_collection
+
+    def area(
+        self,
+        wkt: str,
+        datetime_: Optional[str] = None,
+        select_properties: Optional[list] = None,
+        limit: int = 100,
+        format_: Optional[str] = None,
+        **kwargs,
+    ):
+        """
+        Extract and return location from SQL table.
+
+        :param wkt: WKT geometry for spatial queries.
+        :param datetime_: Temporal filter for observations.
+        :param select_properties: List of properties to include.
+        :param limit: number of records to return (default 100)
+
+        :returns: A GeoJSON FeatureCollection of locations.
+        """
+        storage_srid = get_crs_from_uri(self.storage_crs).to_epsg()
+
+        geom = WKTElement(wkt, srid=storage_srid, extended=False)
+
+        area_filter = self.gc.intersects(geom)
+        time_filter = self._get_datetime_filter(datetime_)
+        parameter_filters = self._get_parameter_filters(select_properties)
+        filters = [area_filter, parameter_filters, time_filter]
+
+        coverage_collection = empty_coverage_collection()
+
+        location_query = (
+            self._select(self.lc, self.gc, filters=filters)
+            .distinct(self.lc)
+            .limit(limit)
+        )
+
+        parameters = set()
+        with Session(self._engine) as session:
+            # LOGGER.error(f"Fetching coverage for {location_query.compile(compile_kwargs={'literal_binds': True})}")
+            a = session.execute(location_query).scalar()
+            LOGGER.error(a)
+            for location_id, geom in session.execute(location_query):
+                LOGGER.error(f"Fetching coverage for {location_id}")
+                coverage = self.location(
+                    location_id,
+                    geom,
+                    session,
+                    select_properties,
+                    datetime_,
+                    limit,
+                )
+                coverage["domain"].pop("referencing")
+                parameters.update(coverage.pop("parameters"))
+                coverage_collection["coverages"].append(coverage)
+
+        coverage_collection["parameters"] = self._get_parameters(parameters)
+        return coverage_collection
+
     def location(
         self,
         location_id: str,
+        geom: Any,
+        session: Session,
         select_properties: list = [],
         datetime_: Optional[str] = None,
         limit: int = 100,
@@ -217,6 +347,8 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         Extract and return single location from SQL table.
 
         :param location_id: Identifier of the location to filter by.
+        :param geom: Location geometry object
+        :param session: SQL session object
         :param select_properties: List of properties to include.
         :param bbox: Bounding box geometry for spatial queries.
         :param datetime_: Temporal filter for observations.
@@ -226,6 +358,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         """
 
         coverage = empty_coverage()
+        coverage["id"] = location_id
         ranges = {}
         domain = coverage['domain']
         t_values: list = domain['axes']['t']['values']
@@ -261,35 +394,23 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
                 model, self.tc == tc, isouter=True
             ).add_columns(rc)
 
-        # Get the geometry of the location
-        location_query = self._select(
-            self.gc, filters=[self.lc == location_id]
-        ).limit(1)
+        # Construct the query
+        parameter_names = set()
+        for row in session.execute(results):
+            row = row._asdict()
 
-        with Session(self._engine) as session:
-            geom = session.execute(location_query).scalar()
-            if not geom:
-                msg = f'Location not found: {location_id}'
-                raise ProviderItemNotFoundError(msg)
+            # Add time value to domain
+            t_values.append(row.pop(self.time_field))
 
-            # Construct the query
-            parameter_names = set()
-            for row in session.execute(results):
-                row = row._asdict()
+            # Add parameter values to ranges
+            for pname, value in row.items():
+                if value is not None:
+                    parameter_names.add(pname)
 
-                # Add time value to domain
-                t_values.append(row.pop(self.time_field))
-
-                # Add parameter values to ranges
-                for pname, value in row.items():
-                    if value is not None:
-                        parameter_names.add(pname)
-
-                    ranges[pname]['values'].append(value)
-                    ranges[pname]['shape'][0] += 1
+                ranges[pname]["values"].append(value)
+                ranges[pname]["shape"][0] += 1
 
         apply_domain_geometry(domain, geom)
-
         if len(t_values) > 1:
             domain['domainType'] += 'Series'
 
@@ -312,10 +433,10 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         """
 
         feature = {
-            'type': 'Feature',
-            'id': id,
-            'properties': {'parameters': params},
-            'geometry': read_geom(wkb_geom, as_geojson=True),
+            "type": "Feature",
+            "id": id,
+            "properties": {"parameter-name": params},
+            "geometry": read_geom(wkb_geom, as_geojson=True),
         }
 
         if properties:
@@ -505,11 +626,23 @@ class PostgresEDRProvider(EDRProvider):
 
     def locations(self, *args, **kwargs):
         """
-        Service EDR queries
+        Service Locations EDR queries
         """
         return EDRProvider.locations(self, *args, **kwargs)
 
-    def items(self, **kwargs) -> dict:
+    def cube(self, *args, **kwargs):
+        """
+        Service Cube EDR queries
+        """
+        return EDRProvider.cube(self, *args, **kwargs)
+
+    def area(self, *args, **kwargs):
+        """
+        Service Area EDR queries
+        """
+        return EDRProvider.area(self, *args, **kwargs)
+
+    def items(self, **kwargs):
         """
         Retrieve a collection of items.
 
@@ -566,16 +699,29 @@ class MySQLEDRProvider(EDRProvider):
         minx, miny, maxx, maxy = bbox
         polygon_wkt = f'POLYGON(({minx} {miny}, {maxx} {miny}, {maxx} {maxy}, {minx} {maxy}, {minx} {miny}))'  # noqa
         # Use MySQL MBRContains for index-accelerated bounding box checks
+        storage_srid = get_crs_from_uri(self.storage_crs).to_epsg()
         bbox_filter = func.MBRContains(
-            func.ST_GeomFromText(polygon_wkt), self.gc
+            func.ST_GeomFromText(polygon_wkt, storage_srid), self.gc
         )
         return bbox_filter
 
     def locations(self, *args, **kwargs):
         """
-        Service EDR queries
+        Service Locations EDR queries
         """
         return EDRProvider.locations(self, *args, **kwargs)
+
+    def cube(self, *args, **kwargs):
+        """
+        Service Cube EDR queries
+        """
+        return EDRProvider.cube(self, *args, **kwargs)
+
+    def area(self, *args, **kwargs):
+        """
+        Service Area EDR queries
+        """
+        return EDRProvider.area(self, *args, **kwargs)
 
     def items(self, **kwargs):
         """
