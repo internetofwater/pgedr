@@ -61,10 +61,12 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         # Flatten EDR fields
         provider_def.update(**provider_def.get('edr_fields', {}))
 
-        BaseEDRProvider.__init__(self, provider_def)
-        GenericSQLProvider.__init__(
-            self, provider_def, driver_name, extra_conn_args
-        )
+        with new_span('EDRProvider_init'):
+            BaseEDRProvider.__init__(self, provider_def)
+            with new_span('GenericSQLProvider_init'):
+                GenericSQLProvider.__init__(
+                    self, provider_def, driver_name, extra_conn_args
+                )
 
         LOGGER.debug('Adding external tables')
         self.external_tables = provider_def.get('external_tables', {})
