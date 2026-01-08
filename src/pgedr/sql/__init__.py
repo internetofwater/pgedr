@@ -347,6 +347,12 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
                 {k: v for (k, v) in zip(cleaned_properties, properties)}
             )
 
+            nested_properties = feature['properties'].get('properties')
+            if nested_properties and isinstance(nested_properties, dict):
+                feature['properties'].update(
+                    feature['properties'].pop('properties')
+                )
+
         return feature
 
     @otel_trace()
@@ -530,7 +536,7 @@ class PostgresEDRProvider(EDRProvider):
         """
         return EDRProvider.locations(self, *args, **kwargs)
 
-    def items(self, **kwargs):
+    def items(self, **kwargs) -> dict:
         """
         Retrieve a collection of items.
 
@@ -541,7 +547,7 @@ class PostgresEDRProvider(EDRProvider):
 
         # This method is empty due to the way pygeoapi handles items requests
         # We implement this method inside of the feature provider
-        pass
+        ...
 
     def _param_agg(self):
         """

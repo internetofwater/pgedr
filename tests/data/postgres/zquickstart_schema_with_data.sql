@@ -1,3 +1,6 @@
+-- Copyright 2025 Lincoln Institute of Land Policy
+-- SPDX-License-Identifier: MIT
+
 -- Sample locations
 INSERT INTO edr_quickstart.locations 
     (name, description, properties, geometry)
