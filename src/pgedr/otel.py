@@ -1,21 +1,46 @@
+# Copyright 2025 Lincoln Institute of Land Policy
+# SPDX-License-Identifier: MIT
+
+import contextlib
 import os
-from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import (
-    BatchSpanProcessor,
-)
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
-    OTLPSpanExporter,
-)
-from opentelemetry.sdk.resources import Resource
+import logging
+from typing import TYPE_CHECKING
+
+try:
+    import opentelemetry
+
+    OPENTELEMETRY_AVAILABLE = True
+except ImportError:
+    opentelemetry = None
+    OPENTELEMETRY_AVAILABLE = False
+    logging.info(
+        "The 'pgedr[tracing]' extra was not installed.Tracing will be skipped."
+    )
+if OPENTELEMETRY_AVAILABLE or TYPE_CHECKING:
+    from opentelemetry import trace
+    from opentelemetry.trace import Tracer
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import (
+        BatchSpanProcessor,
+    )
+    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+        OTLPSpanExporter,
+    )
+    from opentelemetry.sdk.resources import Resource
+
 import functools
 import inspect
+
+PG_EDR_TRACER_NAME = 'pgedr_tracer'
 
 _otel_initialized = False
 
 
 def init_otel():
     """Initialize the open telemetry config"""
+    if not OPENTELEMETRY_AVAILABLE:
+        return
+
     global _otel_initialized
     # Guard clause to prevent multiple initializations; should never be called;
     # here to prevent accidental double initialization in future
@@ -43,11 +68,34 @@ def init_otel():
     # Sets the global default tracer provider
     trace.set_tracer_provider(provider)
 
-    print('Initialized open telemetry')
+    logging.info('Initialized open telemetry')
 
 
 init_otel()
-TRACER = trace.get_tracer('pgedr_tracer')
+
+
+@contextlib.contextmanager
+def new_span(name: str):
+    """
+    Context manager that starts an OpenTelemetry span if tracing is installed.
+    Otherwise it yields a no-op mock span.
+    """
+    if OPENTELEMETRY_AVAILABLE:
+        try:
+            tracer: Tracer = trace.get_tracer(PG_EDR_TRACER_NAME)
+            with tracer.start_as_current_span(name) as span:
+                yield span
+                return
+        except Exception:
+            # fall through to no-op version
+            pass
+
+    # No-op fallback span
+    class _NoOpSpan:
+        def set_attribute(self, *args, **kwargs):
+            pass
+
+    yield _NoOpSpan()
 
 
 def otel_trace():
@@ -55,6 +103,12 @@ def otel_trace():
     Decorator to automatically set the span name using the file
     and function name.
     """
+    if not OPENTELEMETRY_AVAILABLE:
+
+        def no_op_decorator(func):
+            return func
+
+        return no_op_decorator
 
     def decorator(func):
         filename = os.path.splitext(os.path.basename(inspect.getfile(func)))[0]
@@ -66,7 +120,9 @@ def otel_trace():
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            with TRACER.start_as_current_span(span_name):
+            with trace.get_tracer(PG_EDR_TRACER_NAME).start_as_current_span(
+                span_name
+            ):
                 return func(*args, **kwargs)
 
         return wrapper
@@ -80,6 +136,8 @@ def add_args_as_attributes_to_span():
     as attributes on the current OpenTelemetry span; useful for
     debugging to see what arguments were passed to a function.
     """
+    if not OPENTELEMETRY_AVAILABLE:
+        return
     span = trace.get_current_span()
 
     # No active span? Nothing to do.
