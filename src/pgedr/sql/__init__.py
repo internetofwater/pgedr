@@ -277,7 +277,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         """
         storage_srid = get_srid(self.storage_crs)
 
-        geom = WKTElement(wkt, srid=storage_srid, extended=False)  # type: ignore
+        geom = WKTElement(wkt, srid=storage_srid, extended=False)  # type: ignore[reportArgumentType] WKTElement is typed to only accept integers despite allowing for srid=None
 
         area_filter = self.gc.intersects(geom)
         time_filter = self._get_datetime_filter(datetime_)
@@ -382,10 +382,10 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
 
     def _fetch_all_locations(
         self,
-        location_query,
-        select_properties,
-        datetime_,
-        limit,
+        location_query: Any,
+        select_properties: Optional[list] = [],
+        datetime_: Optional[str] = None,
+        limit: int = 100,
     ):
         """
         Create CoverageJSON of multiple locations.
