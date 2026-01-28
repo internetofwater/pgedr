@@ -166,12 +166,12 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
                     raise ProviderItemNotFoundError(msg)
 
                 return self.location(
-                    location_id,
-                    geom,
-                    session,
-                    select_properties,
-                    datetime_,
-                    limit,
+                    location_id=location_id,
+                    geom=geom,
+                    session=session,
+                    limit=limit,
+                    select_properties=select_properties,
+                    datetime_=datetime_,
                 )
 
         bbox_filter = self._get_bbox_filter(bbox)
@@ -226,9 +226,9 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
     def cube(
         self,
         bbox: list,
+        limit: int = 100,
         datetime_: Optional[str] = None,
         select_properties: Optional[list] = None,
-        limit: int = 100,
         format_: Optional[str] = None,
         **kwargs,
     ):
@@ -236,11 +236,11 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         Extract and return location from SQL table.
 
         :param bbox: Bounding box geometry for spatial queries.
+        :param limit: number of records to return
         :param datetime_: Temporal filter for observations.
         :param select_properties: List of properties to include.
-        :param limit: number of records to return (default 100)
 
-        :returns: A GeoJSON FeatureCollection of locations.
+        :returns: A CovJSON of locations data.
         """
 
         bbox_filter = self._get_bbox_filter(bbox)
@@ -253,15 +253,18 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         ).distinct(self.lc)
 
         return self._fetch_all_locations(
-            location_query, select_properties, datetime_, limit
+            location_query=location_query,
+            limit=limit,
+            select_properties=select_properties,
+            datetime_=datetime_,
         )
 
     def area(
         self,
         wkt: str,
+        limit: int = 100,
         datetime_: Optional[str] = None,
         select_properties: Optional[list] = None,
-        limit: int = 100,
         format_: Optional[str] = None,
         **kwargs,
     ):
@@ -269,9 +272,9 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         Extract and return location from SQL table.
 
         :param wkt: WKT geometry for spatial queries.
+        :param limit: number of records to return
         :param datetime_: Temporal filter for observations.
         :param select_properties: List of properties to include.
-        :param limit: number of records to return (default 100)
 
         :returns: A GeoJSON FeatureCollection of locations.
         """
@@ -289,7 +292,10 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         ).distinct(self.lc)
 
         return self._fetch_all_locations(
-            location_query, select_properties, datetime_, limit
+            location_query=location_query,
+            limit=limit,
+            select_properties=select_properties,
+            datetime_=datetime_,
         )
 
     def location(
@@ -297,9 +303,9 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         location_id: str,
         geom: Any,
         session: Session,
+        limit: int,
         select_properties: Optional[list] = [],
         datetime_: Optional[str] = None,
-        limit: int = 100,
         **kwargs,
     ):
         """
@@ -308,10 +314,9 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         :param location_id: Identifier of the location to filter by.
         :param geom: Location geometry object
         :param session: SQL session object
-        :param select_properties: List of properties to include.
-        :param bbox: Bounding box geometry for spatial queries.
-        :param datetime_: Temporal filter for observations.
         :param limit: number of records to return (default 100)
+        :param select_properties: List of properties to include.
+        :param datetime_: Temporal filter for observations.
 
         :returns: A CovJSON of location data.
         """
@@ -383,19 +388,19 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
     def _fetch_all_locations(
         self,
         location_query: Any,
+        limit: int,
         select_properties: Optional[list] = [],
         datetime_: Optional[str] = None,
-        limit: int = 100,
     ):
         """
         Create CoverageJSON of multiple locations.
 
         :param location_query: SQL Alchemy select statement for locations.
+        :param limit: number of records to return
         :param select_properties: List of properties to include.
         :param datetime_: Temporal filter for observations.
-        :param limit: number of records to return (default 100)
 
-        :returns: A CovJSON of location data.
+        :returns: A CovJSON of locations data.
         """
         coverage_collection = empty_coverage_collection()
         parameters = set()
@@ -404,12 +409,12 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
             for location_id, geom in session.execute(location_query):
                 LOGGER.debug(f'Fetching coverage for {location_id}')
                 coverage = self.location(
-                    location_id,
-                    geom,
-                    session,
-                    select_properties,
-                    datetime_,
-                    limit,
+                    location_id=location_id,
+                    geom=geom,
+                    session=session,
+                    limit=limit,
+                    select_properties=select_properties,
+                    datetime_=datetime_,
                 )
                 coverage['domain'].pop('referencing')
                 parameters.update(coverage.pop('parameters'))
