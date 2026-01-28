@@ -178,8 +178,18 @@ def test_locations_limit(config):
 def test_locations_bbox(config):
     p = MySQLEDRProvider(config)
 
-    locations = p.locations(bbox=[-77, 38.8, -76.9, 39])
-    assert len(locations['features']) == 0
+    locations = p.locations(bbox=[-77.5, 38, -76, 39])
+    assert len(locations['features']) == 3
+
+
+def test_cube(config):
+    p = MySQLEDRProvider(config)
+
+    response = p.cube(bbox=[-77.5, 38, -76, 39], limit=1)
+    assert len(response['coverages']) == 3
+
+    response = p.cube(bbox=[-77.5, 38, -76, 39], select_properties=['crashes'])
+    assert len(response['coverages']) == 2
 
 
 def test_locations_select_param(config):

@@ -248,32 +248,13 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         parameter_filters = self._get_parameter_filters(select_properties)
         filters = [bbox_filter, parameter_filters, time_filter]
 
-        coverage_collection = empty_coverage_collection()
+        location_query = self._select(
+            self.lc, self.gc, filters=filters
+        ).distinct(self.lc)
 
-        location_query = (
-            self._select(self.lc, self.gc, filters=filters)
-            .distinct(self.lc)
-            .limit(limit)
+        return self._fetch_all_locations(
+            location_query, select_properties, datetime_, limit
         )
-
-        parameters = set()
-        with Session(self._engine) as session:
-            for location_id, geom in session.execute(location_query):
-                LOGGER.error(f'Fetching coverage for {location_id}')
-                coverage = self.location(
-                    location_id,
-                    geom,
-                    session,
-                    select_properties,
-                    datetime_,
-                    limit,
-                )
-                coverage['domain'].pop('referencing')
-                parameters.update(coverage.pop('parameters'))
-                coverage_collection['coverages'].append(coverage)
-
-        coverage_collection['parameters'] = self._get_parameters(parameters)
-        return coverage_collection
 
     def area(
         self,
@@ -303,35 +284,13 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         parameter_filters = self._get_parameter_filters(select_properties)
         filters = [area_filter, parameter_filters, time_filter]
 
-        coverage_collection = empty_coverage_collection()
+        location_query = self._select(
+            self.lc, self.gc, filters=filters
+        ).distinct(self.lc)
 
-        location_query = (
-            self._select(self.lc, self.gc, filters=filters)
-            .distinct(self.lc)
-            .limit(limit)
+        return self._fetch_all_locations(
+            location_query, select_properties, datetime_, limit
         )
-
-        parameters = set()
-        with Session(self._engine) as session:
-            # LOGGER.error(f"Fetching coverage for {location_query.compile(compile_kwargs={'literal_binds': True})}")
-            a = session.execute(location_query).scalar()
-            LOGGER.error(a)
-            for location_id, geom in session.execute(location_query):
-                LOGGER.error(f'Fetching coverage for {location_id}')
-                coverage = self.location(
-                    location_id,
-                    geom,
-                    session,
-                    select_properties,
-                    datetime_,
-                    limit,
-                )
-                coverage['domain'].pop('referencing')
-                parameters.update(coverage.pop('parameters'))
-                coverage_collection['coverages'].append(coverage)
-
-        coverage_collection['parameters'] = self._get_parameters(parameters)
-        return coverage_collection
 
     def location(
         self,
@@ -420,6 +379,45 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         }
 
         return coverage
+
+    def _fetch_all_locations(
+        self,
+        location_query,
+        select_properties,
+        datetime_,
+        limit,
+    ):
+        """
+        Create CoverageJSON of multiple locations.
+
+        :param location_query: SQL Alchemy select statement for locations.
+        :param select_properties: List of properties to include.
+        :param datetime_: Temporal filter for observations.
+        :param limit: number of records to return (default 100)
+
+        :returns: A CovJSON of location data.
+        """
+        coverage_collection = empty_coverage_collection()
+        parameters = set()
+
+        with Session(self._engine) as session:
+            for location_id, geom in session.execute(location_query):
+                LOGGER.debug(f'Fetching coverage for {location_id}')
+                coverage = self.location(
+                    location_id,
+                    geom,
+                    session,
+                    select_properties,
+                    datetime_,
+                    limit,
+                )
+                coverage['domain'].pop('referencing')
+                parameters.update(coverage.pop('parameters'))
+                coverage_collection['coverages'].append(coverage)
+
+        coverage_collection['parameters'] = self._get_parameters(parameters)
+
+        return coverage_collection
 
     def _sqlalchemy_to_feature(self, id: str, wkb_geom, params, properties=[]):  # type: ignore We have to ignore this for now since the underlying function is inherited and harder to fix
         """
@@ -717,11 +715,12 @@ class MySQLEDRProvider(EDRProvider):
         """
         return EDRProvider.cube(self, *args, **kwargs)
 
-    def area(self, *args, **kwargs):
-        """
-        Service Area EDR queries
-        """
-        return EDRProvider.area(self, *args, **kwargs)
+    # TODO: Fix MySQL parsing of WKT
+    # def area(self, *args, **kwargs):
+    #     """
+    #     Service Area EDR queries
+    #     """
+    #     return EDRProvider.area(self, *args, **kwargs)
 
     def items(self, **kwargs):
         """
