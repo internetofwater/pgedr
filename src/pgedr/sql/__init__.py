@@ -11,10 +11,10 @@ from sqlalchemy import func, select, distinct
 from sqlalchemy.orm import Session, relationship, aliased
 from sqlalchemy.sql.expression import or_
 
+from pygeoapi.crs import get_srid
 from pygeoapi.provider.base import ProviderItemNotFoundError
 from pygeoapi.provider.base_edr import BaseEDRProvider
 from pygeoapi.provider.sql import GenericSQLProvider
-from pygeoapi.util import get_crs_from_uri
 
 from pgedr.lib import (
     empty_coverage,
@@ -162,7 +162,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
             with Session(self._engine) as session:
                 geom = session.execute(location_query).scalar()
                 if not geom:
-                    msg = f"Location not found: {location_id}"
+                    msg = f'Location not found: {location_id}'
                     raise ProviderItemNotFoundError(msg)
 
                 return self.location(
@@ -259,7 +259,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         parameters = set()
         with Session(self._engine) as session:
             for location_id, geom in session.execute(location_query):
-                LOGGER.error(f"Fetching coverage for {location_id}")
+                LOGGER.error(f'Fetching coverage for {location_id}')
                 coverage = self.location(
                     location_id,
                     geom,
@@ -268,11 +268,11 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
                     datetime_,
                     limit,
                 )
-                coverage["domain"].pop("referencing")
-                parameters.update(coverage.pop("parameters"))
-                coverage_collection["coverages"].append(coverage)
+                coverage['domain'].pop('referencing')
+                parameters.update(coverage.pop('parameters'))
+                coverage_collection['coverages'].append(coverage)
 
-        coverage_collection["parameters"] = self._get_parameters(parameters)
+        coverage_collection['parameters'] = self._get_parameters(parameters)
         return coverage_collection
 
     def area(
@@ -294,9 +294,9 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
 
         :returns: A GeoJSON FeatureCollection of locations.
         """
-        storage_srid = get_crs_from_uri(self.storage_crs).to_epsg()
+        storage_srid = get_srid(self.storage_crs)
 
-        geom = WKTElement(wkt, srid=storage_srid, extended=False)
+        geom = WKTElement(wkt, srid=storage_srid, extended=False)  # type: ignore
 
         area_filter = self.gc.intersects(geom)
         time_filter = self._get_datetime_filter(datetime_)
@@ -317,7 +317,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
             a = session.execute(location_query).scalar()
             LOGGER.error(a)
             for location_id, geom in session.execute(location_query):
-                LOGGER.error(f"Fetching coverage for {location_id}")
+                LOGGER.error(f'Fetching coverage for {location_id}')
                 coverage = self.location(
                     location_id,
                     geom,
@@ -326,11 +326,11 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
                     datetime_,
                     limit,
                 )
-                coverage["domain"].pop("referencing")
-                parameters.update(coverage.pop("parameters"))
-                coverage_collection["coverages"].append(coverage)
+                coverage['domain'].pop('referencing')
+                parameters.update(coverage.pop('parameters'))
+                coverage_collection['coverages'].append(coverage)
 
-        coverage_collection["parameters"] = self._get_parameters(parameters)
+        coverage_collection['parameters'] = self._get_parameters(parameters)
         return coverage_collection
 
     def location(
@@ -338,7 +338,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         location_id: str,
         geom: Any,
         session: Session,
-        select_properties: list = [],
+        select_properties: Optional[list] = [],
         datetime_: Optional[str] = None,
         limit: int = 100,
         **kwargs,
@@ -358,7 +358,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         """
 
         coverage = empty_coverage()
-        coverage["id"] = location_id
+        coverage['id'] = location_id
         ranges = {}
         domain = coverage['domain']
         t_values: list = domain['axes']['t']['values']
@@ -407,8 +407,8 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
                 if value is not None:
                     parameter_names.add(pname)
 
-                ranges[pname]["values"].append(value)
-                ranges[pname]["shape"][0] += 1
+                ranges[pname]['values'].append(value)
+                ranges[pname]['shape'][0] += 1
 
         apply_domain_geometry(domain, geom)
         if len(t_values) > 1:
@@ -433,10 +433,10 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         """
 
         feature = {
-            "type": "Feature",
-            "id": id,
-            "properties": {"parameter-name": params},
-            "geometry": read_geom(wkb_geom, as_geojson=True),
+            'type': 'Feature',
+            'id': id,
+            'properties': {'parameter-name': params},
+            'geometry': read_geom(wkb_geom, as_geojson=True),
         }
 
         if properties:
@@ -699,7 +699,7 @@ class MySQLEDRProvider(EDRProvider):
         minx, miny, maxx, maxy = bbox
         polygon_wkt = f'POLYGON(({minx} {miny}, {maxx} {miny}, {maxx} {maxy}, {minx} {maxy}, {minx} {miny}))'  # noqa
         # Use MySQL MBRContains for index-accelerated bounding box checks
-        storage_srid = get_crs_from_uri(self.storage_crs).to_epsg()
+        storage_srid = get_srid(self.storage_crs)
         bbox_filter = func.MBRContains(
             func.ST_GeomFromText(polygon_wkt, storage_srid), self.gc
         )
