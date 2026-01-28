@@ -140,7 +140,7 @@ def test_locations(config):
 
     feature = locations['features'][0]
     assert feature['id'] == 'ADW'
-    assert feature['properties']['parameters'] == ['crashes', 'landings']
+    assert feature['properties']['parameter-name'] == ['crashes', 'landings']
 
 
 def test_locations_with_prop(config):

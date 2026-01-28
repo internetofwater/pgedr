@@ -78,7 +78,7 @@ def test_bad_location_id(config):
     p = PostgresEDRProvider(config)
 
     with pytest.raises(ProviderItemNotFoundError):
-        p.locations(location_id="USGS-01465791")
+        p.locations(location_id='USGS-01465791')
 
 
 def test_external_table_relationships(config):
@@ -168,7 +168,7 @@ def test_locations(config):
 
     feature = locations['features'][0]
     assert feature['id'] == 'USGS-01465798'
-    assert feature['properties']['parameters'] == ['00060']
+    assert feature['properties']['parameter-name'] == ['00060']
 
 
 def test_locations_with_prop(config):
