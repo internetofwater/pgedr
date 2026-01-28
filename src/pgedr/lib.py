@@ -45,10 +45,9 @@ def empty_coverage_collection():
     """
     return {
         'type': 'CoverageCollection',
-        'domainType': 'Point',
-        'referencing': [GEOGRAPHIC_CRS, TEMPORAL_RS],
         'parameters': [],
         'coverages': [],
+        'referencing': [GEOGRAPHIC_CRS, TEMPORAL_RS]
     }
 
 

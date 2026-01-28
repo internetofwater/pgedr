@@ -74,6 +74,13 @@ def test_invalid_config(config):
         PostgresEDRProvider(config)
 
 
+def test_bad_location_id(config):
+    p = PostgresEDRProvider(config)
+
+    with pytest.raises(ProviderItemNotFoundError):
+        p.locations(location_id='USGS-01465791')
+
+
 def test_external_table_relationships(config):
     p = PostgresEDRProvider(config)
 
@@ -161,7 +168,7 @@ def test_locations(config):
 
     feature = locations['features'][0]
     assert feature['id'] == 'USGS-01465798'
-    assert feature['properties']['parameters'] == ['00060']
+    assert feature['properties']['parameter-name'] == ['00060']
 
 
 def test_locations_with_prop(config):
@@ -202,6 +209,26 @@ def test_locations_bbox(config):
 
     locations = p.locations(bbox=[-109, 31, -103, 37])
     assert len(locations['features']) == 3
+
+
+def test_cube(config):
+    p = PostgresEDRProvider(config)
+
+    response = p.cube(bbox=[-109, 31, -103, 37], limit=1)
+    assert len(response['coverages']) == 3
+
+    response = p.cube(bbox=[-109, 31, -103, 37], select_properties=['00060'])
+    assert len(response['coverages']) == 1
+
+
+def test_area(config):
+    p = PostgresEDRProvider(config)
+    wkt = 'POLYGON((-109 31, -103 31, -103 37, -109 37, -109 31))'
+    response = p.area(wkt=wkt, limit=1)
+    assert len(response['coverages']) == 3
+
+    response = p.area(wkt=wkt, select_properties=['00060'])
+    assert len(response['coverages']) == 1
 
 
 def test_locations_select_param(config):

@@ -38,4 +38,6 @@ jobs:
           make deps
           uv pip install -e ".[dev]"
       - name: Run tests
-        run: uv run pytest tests
+        run: |
+          uv run pytest tests/test_postgres_edr.py
+          uv run pytest tests/test_mysql_edr.py

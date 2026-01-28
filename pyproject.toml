@@ -18,13 +18,13 @@ description = "An OGC API EDR implementation using SQL for pygeoapi"
 authors = [{name = "Benjamin Webb", email = "bwebb@lincolninst.edu"}]
 license = {file = "LICENSE"}
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
     "cryptography>=44.0.3",
     "geoalchemy2",
     "psycopg2",
     "pydantic",
-    "pygeoapi>=0.21.0",
+    "pygeoapi>=0.23.dev0",
     "pymysql>=1.1.1",
 ]
 keywords = ['pygeoapi', 'edr', 'data']
@@ -52,6 +52,7 @@ dev = [
     "pytest>=8.4.2",
     "pytest-cov>=7.0.0",
     "ruff>=0.14.0",
+    "pygeoapi@git+https://github.com/geopython/pygeoapi.git"
 ]
 
 [tool.pytest.ini_options]
