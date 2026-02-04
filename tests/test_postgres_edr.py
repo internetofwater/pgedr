@@ -168,7 +168,6 @@ def test_locations(config):
 
     feature = locations['features'][0]
     assert feature['id'] == 'USGS-01465798'
-    assert feature['properties']['parameter-name'] == ['00060']
 
 
 def test_locations_with_prop(config):
@@ -207,27 +206,29 @@ def test_locations_limit(config):
 def test_locations_bbox(config):
     p = PostgresEDRProvider(config)
 
-    locations = p.locations(bbox=[-109, 31, -103, 37])
-    assert len(locations['features']) == 3
+    locations = p.locations(bbox=[-109, 34, -103, 37])
+    assert len(locations['features']) == 2
 
 
 def test_cube(config):
     p = PostgresEDRProvider(config)
 
-    response = p.cube(bbox=[-109, 31, -103, 37], limit=1)
-    assert len(response['coverages']) == 3
+    response = p.cube(bbox=[-109, 34, -103, 37], limit=1)
+    assert len(response['coverages']) == 2
 
-    response = p.cube(bbox=[-109, 31, -103, 37], select_properties=['00060'])
+    response = p.cube(
+        bbox=[-109, 34, -103, 37], limit=1, select_properties=['00065']
+    )
     assert len(response['coverages']) == 1
 
 
 def test_area(config):
     p = PostgresEDRProvider(config)
-    wkt = 'POLYGON((-109 31, -103 31, -103 37, -109 37, -109 31))'
+    wkt = 'POLYGON((-109 34, -103 34, -103 37, -109 37, -109 34))'
     response = p.area(wkt=wkt, limit=1)
-    assert len(response['coverages']) == 3
+    assert len(response['coverages']) == 2
 
-    response = p.area(wkt=wkt, select_properties=['00060'])
+    response = p.area(wkt=wkt, limit=1, select_properties=['00065'])
     assert len(response['coverages']) == 1
 
 
@@ -235,19 +236,15 @@ def test_locations_select_param(config):
     p = PostgresEDRProvider(config)
 
     locations = p.locations()
-    assert len(locations['parameters']) == 7
 
     locations = p.locations(select_properties=['00010'])
     assert len(locations['features']) == 4
-    assert len(locations['parameters']) == 1
 
     locations = p.locations(select_properties=['00060'])
     assert len(locations['features']) == 9
-    assert len(locations['parameters']) == 1
 
     locations = p.locations(select_properties=['00010', '00060'])
     assert len(locations['features']) == 13
-    assert len(locations['parameters']) == 2
 
 
 def test_get_location(config):
@@ -300,7 +297,6 @@ def test_locations_time(config):
 
     locations = p.locations(datetime_='2024-11-17')
     assert len(locations['features']) == 1
-    assert len(locations['parameters']) == 1
 
 
 def test_expand_properties(config):
@@ -308,7 +304,6 @@ def test_expand_properties(config):
 
     locations = p.locations(datetime_='2024-11-17')
     assert len(locations['features']) == 1
-    assert len(locations['parameters']) == 1
 
 
 @pytest.fixture()

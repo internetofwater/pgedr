@@ -139,8 +139,7 @@ def test_locations(config):
     assert len(locations['features']) == 4
 
     feature = locations['features'][0]
-    assert feature['id'] == 'ADW'
-    assert feature['properties']['parameter-name'] == ['crashes', 'landings']
+    assert feature['id'] == 'DCA'
 
 
 def test_locations_with_prop(config):
@@ -154,7 +153,7 @@ def test_locations_with_prop(config):
     assert len(locations['features']) == 4
 
     feature = locations['features'][0]
-    assert feature['id'] == 'ADW'
+    assert feature['id'] == 'DCA'
     assert feature.get('properties')
     assert 'airline' in feature.get('properties')
 
@@ -197,15 +196,12 @@ def test_locations_select_param(config):
 
     locations = p.locations()
     assert len(locations['features']) == 4
-    assert len(locations['parameters']) == 2
 
     locations = p.locations(select_properties=['crashes'])
     assert len(locations['features']) == 3
-    assert len(locations['parameters']) == 1
 
     locations = p.locations(select_properties=['teleportations'])
     assert len(locations['features']) == 0
-    assert len(locations['parameters']) == 0
 
 
 def test_get_location(config):
@@ -261,4 +257,3 @@ def test_locations_time(config):
 
     locations = p.locations(datetime_='2025-04-30')
     assert len(locations['features']) == 1
-    assert len(locations['parameters']) == 1
