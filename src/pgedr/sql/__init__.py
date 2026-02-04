@@ -180,46 +180,26 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         filters = [bbox_filter, parameter_filters, time_filter]
 
         LOGGER.debug('Preparing response')
-        parameters_names = set()
         response = {
             'type': 'FeatureCollection',
             'features': [],
-            'parameters': [],
             'numberReturned': 0,
         }
 
         extraprops = [gqname(self.model, p).label(p) for p in self.properties]
-        if not isinstance(self, (PostgresEDRProvider, MySQLEDRProvider)):
-            raise ValueError(
-                'This provider does not support param aggregation'
-            )
 
-        params = self._param_agg()
         location_query = (
-            self._select(self.lc, self.gc, params)
-            .filter(*filters)
-            .group_by(self.lc, self.gc, *extraprops)
-            .add_columns(*extraprops)
+            self._select(self.lc, self.gc, *extraprops, filters=filters)
+            .distinct(self.lc)
             .limit(limit)
         )
 
         with Session(self._engine) as session:
-            for id, geom, params, *extraprops in session.execute(
-                location_query
-            ):
-                if isinstance(params, str):
-                    params = params.split(',')
-
+            for id, geom, *extraprops in session.execute(location_query):
                 response['numberReturned'] += 1
                 response['features'].append(
-                    self._sqlalchemy_to_feature(id, geom, params, extraprops)
+                    self._sqlalchemy_to_feature(id, geom, extraprops)
                 )
-                parameters_names.update(params)
-
-        if parameters_names:
-            response['parameters'] = self._get_parameters(
-                parameters_names, aslist=True
-            )
 
         return response
 
@@ -424,7 +404,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
 
         return coverage_collection
 
-    def _sqlalchemy_to_feature(self, id: str, wkb_geom, params, properties=[]):  # type: ignore We have to ignore this for now since the underlying function is inherited and harder to fix
+    def _sqlalchemy_to_feature(self, id: str, wkb_geom, properties=[]):  # type: ignore We have to ignore this for now since the underlying function is inherited and harder to fix
         """
         Create GeoJSON of location.
 
@@ -438,7 +418,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         feature = {
             'type': 'Feature',
             'id': id,
-            'properties': {'parameter-name': params},
+            'properties': {},
             'geometry': read_geom(wkb_geom, as_geojson=True),
         }
 
