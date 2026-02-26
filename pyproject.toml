@@ -24,7 +24,7 @@ dependencies = [
     "geoalchemy2",
     "psycopg2",
     "pydantic",
-    "pygeoapi>=0.23.dev0",
+    "pygeoapi@git+https://github.com/geopython/pygeoapi.git",
     "pymysql>=1.1.1",
 ]
 keywords = ['pygeoapi', 'edr', 'data']

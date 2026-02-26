@@ -2,3 +2,4 @@
 # SPDX-License-Identifier: MIT
 
 from pgedr.sql import PostgresEDRProvider, MySQLEDRProvider  # noqa
+from pgedr.sql.rise import RISEEDRProvider  # noqa

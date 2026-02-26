@@ -37,6 +37,8 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
     cursor (using support class DatabaseCursor)
     """
 
+    db_search_path: list[str]
+
     def __init__(
         self,
         provider_def: dict,

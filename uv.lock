@@ -551,7 +551,7 @@ requires-dist = [
     { name = "geoalchemy2" },
     { name = "psycopg2" },
     { name = "pydantic" },
-    { name = "pygeoapi", specifier = ">=0.23.dev0" },
+    { name = "pygeoapi", git = "https://github.com/geopython/pygeoapi.git" },
     { name = "pymysql", specifier = ">=1.1.1" },
 ]
 
@@ -649,7 +649,7 @@ wheels = [
 [[package]]
 name = "pygeoapi"
 version = "0.23.dev0"
-source = { git = "https://github.com/geopython/pygeoapi.git#00815491170949baf8f964de505989be86fcec3c" }
+source = { git = "https://github.com/geopython/pygeoapi.git#b777b16d81670fca43a75db2f04d5f802bbf5155" }
 dependencies = [
     { name = "babel" },
     { name = "click" },
