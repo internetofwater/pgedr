@@ -48,8 +48,8 @@ def test_get_locations(config):
     assert len(response['features']) == 5
 
 
-def test_get_locations_with_avoid_joins(config):
-    config['avoid_joins'] = True
+def test_get_locations_with_joining_locations(config):
+    config['join_locations'] = True
     p = RISEEDRProvider(config)
 
     response = p.locations()
@@ -119,6 +119,21 @@ def test_get_location(config):
     assert len(response['domain']['axes']['t']['values']) == 100
     assert len(response['ranges']['18']['values']) == 100
     assert len(response['ranges']) == 3
+
+
+def test_get_location_with_sorted_results(config):
+    p = RISEEDRProvider(config)
+
+    response = p.location(location_id='501')
+    t_values = response['domain']['axes']['t']['values']
+    assert t_values != sorted(t_values, reverse=True)
+
+    config['sort_results'] = True
+    p = RISEEDRProvider(config)
+
+    response = p.location(location_id='501')
+    t_values = response['domain']['axes']['t']['values']
+    assert t_values == sorted(t_values, reverse=True)
 
 
 def test_get_location_with_limit(config):

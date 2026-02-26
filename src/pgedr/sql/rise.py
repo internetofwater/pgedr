@@ -63,7 +63,7 @@ class RISEEDRProvider(BaseEDRProvider):
         LOGGER.debug('Initializing RISE EDR provider')
 
         BaseEDRProvider.__init__(self, provider_def)
-        self.avoid_joins = provider_def.get('avoid_joins', False)
+
         options = {'charset': 'utf8mb4'} | provider_def.get('options', {})
         store_db_parameters(self, provider_def['data'], options)
         self._engine = get_engine(
@@ -79,6 +79,9 @@ class RISEEDRProvider(BaseEDRProvider):
         [self.Location, self.Parameter, self.ParameterUnit, self.Results] = (
             get_models(self._engine)
         )
+
+        self.join_locations = provider_def.get('join_locations', False)
+        self.sort_results = provider_def.get('sort_results', False)
 
         self.get_fields()
         LOGGER.debug('Initialized RISE EDR provider')
@@ -156,7 +159,7 @@ class RISEEDRProvider(BaseEDRProvider):
             self.Location.locationCoordinates,
         )
 
-        if not self.avoid_joins or filters != [True, True]:
+        if not self.join_locations or filters != [True, True]:
             # Only apply joins if there are filters to apply
             query = query.join(
                 self.Results,
@@ -240,9 +243,12 @@ class RISEEDRProvider(BaseEDRProvider):
             .filter(parameter_filters)
             .filter(time_filter)
             .distinct()
-            .order_by(self.Results.dateTime.desc())
-            .limit(limit)
         )
+
+        if self.sort_results:
+            results = results.order_by(self.Results.dateTime.desc())
+
+        results = results.limit(limit)
 
         LOGGER.error(f'select_parameters: {select_parameters}')
         for parameter in select_parameters:
