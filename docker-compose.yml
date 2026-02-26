@@ -37,7 +37,26 @@ services:
     ports:
       - 3306:3306
     volumes:
-      - ./tests/data/mysql/:/docker-entrypoint-initdb.d/:ro
+      - ./tests/data/mysql/airport-mysql.sql:/docker-entrypoint-initdb.d/airport-mysql.sql:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h $MYSQL_HOST -u$MYSQL_USER -p$MYSQL_PASSWORD --silent",
+        ]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+
+  mysql-rise:
+    image: mysql:8
+    env_file:
+      - .env
+    ports:
+      - 3307:3306
+    volumes:
+      - ./tests/data/mysql/rise-mysql.sql.gz:/docker-entrypoint-initdb.d/rise-mysql.sql.gz:ro
     healthcheck:
       test:
         [

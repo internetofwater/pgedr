@@ -28,6 +28,7 @@ def empty_coverage():
     Return empty Coverage dictionary.
     """
     return {
+        'id': '',
         'type': 'Coverage',
         'domain': {
             'type': 'Domain',
@@ -47,7 +48,7 @@ def empty_coverage_collection():
         'type': 'CoverageCollection',
         'parameters': [],
         'coverages': [],
-        'referencing': [GEOGRAPHIC_CRS, TEMPORAL_RS]
+        'referencing': [GEOGRAPHIC_CRS, TEMPORAL_RS],
     }
 
 
@@ -76,6 +77,9 @@ def read_geom(geom: Any, as_geojson: bool = False) -> Any:
 
     :return: Shapely geometry object or GeoJSON-like dict
     """
+    if geom is None:
+        return None
+
     try:
         geom = to_shape(geom)
     except Exception:
