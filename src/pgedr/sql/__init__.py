@@ -303,8 +303,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         :returns: A CovJSON of location data.
         """
 
-        coverage = empty_coverage()
-        coverage['id'] = location_id
+        coverage = empty_coverage(id=location_id)
         ranges = {}
         domain = coverage['domain']
         t_values: list = domain['axes']['t']['values']
