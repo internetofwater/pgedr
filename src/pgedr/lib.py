@@ -23,12 +23,12 @@ TEMPORAL_RS = {
 }
 
 
-def empty_coverage():
+def empty_coverage(**kwargs):
     """
     Return empty Coverage dictionary.
     """
     return {
-        'id': '',
+        **kwargs,
         'type': 'Coverage',
         'domain': {
             'type': 'Domain',

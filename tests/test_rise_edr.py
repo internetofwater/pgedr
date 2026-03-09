@@ -85,6 +85,15 @@ def test_get_locations_with_param(config):
     assert len(response['features']) == 0
 
 
+def test_locations_with_bbox(config):
+    p = RISEEDRProvider(config)
+
+    response = p.locations(bbox=[-112, 31, -101, 40])
+
+    assert response['numberReturned'] == 3
+    assert len(response['features']) == 3
+
+
 def test_get_locations_with_datetime(config):
     p = RISEEDRProvider(config)
 
