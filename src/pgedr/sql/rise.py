@@ -4,10 +4,9 @@
 import logging
 
 import functools
-from geoalchemy2 import Geometry  # noqa - this isn't used explicitly but is needed to process Geometry columns
 from typing import Optional, Any
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import (
     Session,
@@ -15,6 +14,7 @@ from sqlalchemy.orm import (
 )
 from sqlalchemy.sql.expression import or_
 
+from pygeoapi.crs import get_srid
 from pygeoapi.provider.base import (
     ProviderItemNotFoundError,
     ProviderNoDataError,
@@ -49,6 +49,8 @@ class RISEEDRProvider(BaseEDRProvider):
     ParameterUnit: Any
     Results: Any
 
+    store_db_parameters = store_db_parameters
+
     def __init__(
         self,
         provider_def: dict,
@@ -65,7 +67,7 @@ class RISEEDRProvider(BaseEDRProvider):
         BaseEDRProvider.__init__(self, provider_def)
 
         options = {'charset': 'utf8mb4'} | provider_def.get('options', {})
-        store_db_parameters(self, provider_def['data'], options)
+        self.store_db_parameters(provider_def['data'], options)
         self._engine = get_engine(
             'mysql+pymysql',
             self.db_host,
@@ -105,7 +107,8 @@ class RISEEDRProvider(BaseEDRProvider):
                     self.ParameterUnit.parameterUnit,
                 ).join(self.ParameterUnit)
 
-                for pid, pname, pdesc, punit in session.execute(query):
+                result = self._compile_and_execute(session, query)
+                for pid, pname, pdesc, punit in result:
                     self._fields[str(pid)] = {
                         'type': 'number',
                         'title': pname,
@@ -119,6 +122,7 @@ class RISEEDRProvider(BaseEDRProvider):
         self,
         location_id: Optional[str] = None,
         select_properties: list = [],
+        bbox: list = [],
         datetime_: Optional[str] = None,
         limit: int = 100,
         **kwargs,
@@ -128,6 +132,7 @@ class RISEEDRProvider(BaseEDRProvider):
 
         :param location_id: Identifier of the location to filter by.
         :param select_properties: List of properties to include.
+        :param bbox: Bounding box geometry for spatial queries.
         :param datetime_: Temporal filter for observations.
         :param limit: number of records to return (default 100)
 
@@ -149,6 +154,7 @@ class RISEEDRProvider(BaseEDRProvider):
             'numberReturned': 0,
         }
 
+        bbox_filter = self._get_bbox_filter(bbox)
         time_filter = self._get_datetime_filter(datetime_)
         parameter_filters = self._get_parameter_filters(select_properties)
         filters = [time_filter, parameter_filters]
@@ -158,6 +164,9 @@ class RISEEDRProvider(BaseEDRProvider):
             self.Location.locationName,
             self.Location.locationCoordinates,
         )
+
+        if bbox_filter is not True:
+            query = query.filter(bbox_filter)
 
         if not self.join_locations or filters != [True, True]:
             # Only apply joins if there are filters to apply
@@ -169,9 +178,8 @@ class RISEEDRProvider(BaseEDRProvider):
         query = query.distinct().limit(limit)
 
         LOGGER.debug('Executing query to retrieve locations')
-        LOGGER.debug(f'Query: {self._compile_query(query)}')
         with Session(self._engine) as session:
-            for id, name, geom in session.execute(query):
+            for id, name, geom in self._compile_and_execute(session, query):
                 response['features'].append(
                     {
                         'type': 'Feature',
@@ -213,7 +221,7 @@ class RISEEDRProvider(BaseEDRProvider):
             .distinct()
         )
         with Session(self._engine) as session:
-            geom = session.execute(query).scalar()
+            geom = self._compile_and_execute(session, query).scalar()
             if not geom:
                 msg = f'Location not found: {location_id}'
                 raise ProviderItemNotFoundError(msg)
@@ -222,17 +230,21 @@ class RISEEDRProvider(BaseEDRProvider):
                 select_parameters = set(map(str, select_properties))
             else:
                 select_parameters = set(
-                    [str(pid) for (pid,) in session.execute(parameter_query)]
+                    [
+                        str(pid)
+                        for (pid,) in self._compile_and_execute(
+                            session, parameter_query
+                        )
+                    ]
                 )
                 if len(select_parameters) == 0:
                     msg = f'Location has no data found: {location_id}'
                     raise ProviderNoDataError(msg)
 
-        coverage = empty_coverage()
-        coverage['id'] = location_id
-        ranges = {}
+        coverage = empty_coverage(id=location_id)
         domain = coverage['domain']
         t_values: list = domain['axes']['t']['values']
+        ranges = {}
 
         parameter_filters = self._get_parameter_filters(select_properties)
         time_filter = self._get_datetime_filter(datetime_)
@@ -250,28 +262,15 @@ class RISEEDRProvider(BaseEDRProvider):
 
         results = results.limit(limit)
 
-        LOGGER.error(f'select_parameters: {select_parameters}')
         for parameter in select_parameters:
-            parameter_query = (
-                select(
-                    self.Results.result,
-                    self.Results.dateTime,
-                )
-                .filter(time_filter)
-                .filter(self.Results.locationID == location_id)
-                .filter(self.Results.parameterID == parameter)
-                .subquery()
-            )
-            model = aliased(self.Results, parameter_query)
             ranges[parameter] = empty_range()
-            results = results.join(
-                model, self.Results.dateTime == model.dateTime
-            ).add_columns(model.result.label(parameter))
-
+            results = self._construct_parameter_query(
+                results, parameter, location_id
+            )
         with Session(self._engine) as session:
             # Construct the query
             parameter_names = set()
-            for row in session.execute(results):
+            for row in self._compile_and_execute(session, results):
                 row = row._asdict()
 
                 # Add time value to domain
@@ -299,26 +298,6 @@ class RISEEDRProvider(BaseEDRProvider):
             raise ProviderNoDataError(msg)
 
         return coverage
-
-    def _sqlalchemy_to_feature(self, id: str, geom: Any, name: str) -> dict:
-        """
-        Create GeoJSON of location.
-
-        :param id: Identifier of the location.
-        :param geom: Geometry of the location.
-        :param name: Additional fields for feature properties.
-
-        :returns: A Feature of location data.
-        """
-
-        feature = {
-            'type': 'Feature',
-            'id': id,
-            'properties': {'name': name},
-            'geometry': read_geom(geom, as_geojson=True),
-        }
-
-        return feature
 
     def _get_parameters(self, parameters: set, aslist=False):
         """
@@ -391,7 +370,56 @@ class RISEEDRProvider(BaseEDRProvider):
 
         return datetime_filter
 
-    def _compile_query(self, query):
+    def _get_bbox_filter(self, bbox: list[float]):
+        """
+        Construct the bounding box filter function
+        """
+        if not bbox:
+            return True  # Let everything through if no bbox
+
+        # If we are using mysql we can't use ST_MakeEnvelope since it is
+        # postgis specific and thus we have to use MBRContains with a WKT
+        # POLYGON
+
+        # Create WKT POLYGON from bbox: (minx, miny, maxx, maxy)
+        miny, minx, maxy, maxx = bbox
+        polygon_wkt = f'POLYGON(({minx} {miny}, {maxx} {miny}, {maxx} {maxy}, {minx} {maxy}, {minx} {miny}))'  # noqa
+        # Use MySQL MBRContains for index-accelerated bounding box checks
+        storage_srid = get_srid(self.storage_crs)
+        bbox_filter = func.MBRContains(
+            func.ST_GeomFromText(polygon_wkt, storage_srid),
+            func.ST_GeomFromGeoJSON(self.Location.locationCoordinates),
+        )
+        return bbox_filter
+
+    def _construct_parameter_query(
+        self, query: Any, parameter: str, location_id: str
+    ):
+        """
+        Construct a query for a specific parameter and join to main query.
+
+        :param query: The main SQLAlchemy query to join to.
+        :param parameter: The parameter ID to filter by.
+        :param location_id: The location ID to filter by.
+
+        :returns: The modified SQLAlchemy query with the parameter joined in.
+        """
+        parameter_query = (
+            select(
+                self.Results.result,
+                self.Results.dateTime,
+            )
+            .filter(self.Results.locationID == location_id)
+            .filter(self.Results.parameterID == parameter)
+            .subquery()
+        )
+        model = aliased(self.Results, parameter_query)
+        parameter_column = model.result.label(parameter)
+        return query.join(
+            model, self.Results.dateTime == model.dateTime
+        ).add_columns(parameter_column)
+
+    def _compile_and_execute(self, session, query):
         """
         Compile a SQLAlchemy query to a string with parameters rendered.
 
@@ -399,11 +427,12 @@ class RISEEDRProvider(BaseEDRProvider):
 
         :returns: A string of the compiled SQL query.
         """
-        compiled = query.compile(
+        compiled_query = query.compile(
             compile_kwargs={'literal_binds': True},
             dialect=self._engine.dialect,
         )
-        return str(compiled)
+        LOGGER.debug(f'Compiled query: {compiled_query}')
+        return session.execute(query)
 
 
 @functools.cache
