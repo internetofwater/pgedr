@@ -8,7 +8,6 @@ import functools
 from typing import Optional, Any
 
 from sqlalchemy import select, func
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import (
     Session,
@@ -474,27 +473,27 @@ class RISEFeatureProvider(GenericSQLProvider):
         # Execute query within self-closing database Session context
         with Session(self._engine) as session:
             # Retrieve data from database as feature
+            item = session.get(self.table_model, identifier)  # type: ignore
             try:
-                item = session.get(self.table_model, identifier)
-                # Ensure that item is not None
                 assert item is not None
                 # Ensure returned row has exact match
                 feature_id = getattr(item, self.id_field)
                 assert str(feature_id) == identifier
-            except (AssertionError, SQLAlchemyError) as e:
+            except AssertionError as e:
                 LOGGER.debug(e, exc_info=True)
                 msg = f'No such item: {self.id_field}={identifier}.'
                 raise ProviderItemNotFoundError(msg)
-            crs_transform_out = get_transform_from_spec(crs_transform_spec)
-            feature = self._sqlalchemy_to_feature(item, crs_transform_out)
 
-            # Drop non-defined properties
-            if self.properties:
-                props = feature['properties']
-                dropping_keys = deepcopy(props).keys()
-                for item in dropping_keys:
-                    if item not in self.properties:
-                        props.pop(item)
+        crs_out = get_transform_from_spec(crs_transform_spec)  # type: ignore
+        feature = self._sqlalchemy_to_feature(item, crs_out)
+
+        # Drop non-defined properties
+        if self.properties:
+            props = feature['properties']
+            dropping_keys = deepcopy(props).keys()
+            for item in dropping_keys:
+                if item not in self.properties:
+                    props.pop(item)
 
         return feature
 
