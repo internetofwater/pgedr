@@ -511,11 +511,12 @@ class RISEFeatureProvider(GenericSQLProvider):
         # Create WKT POLYGON from bbox: (minx, miny, maxx, maxy)
         miny, minx, maxy, maxx = bbox
         polygon_wkt = f'POLYGON(({minx} {miny}, {maxx} {miny}, {maxx} {maxy}, {minx} {maxy}, {minx} {miny}))'  # noqa
+        geom_column = getattr(self.table_model, self.geom)
         # Use MySQL MBRContains for index-accelerated bounding box checks
         storage_srid = get_srid(self.storage_crs)
         bbox_filter = func.MBRContains(
             func.ST_GeomFromText(polygon_wkt, storage_srid),
-            func.ST_GeomFromGeoJSON(self.Location.locationCoordinates),
+            func.ST_GeomFromGeoJSON(geom_column),
         )
         return bbox_filter
 
