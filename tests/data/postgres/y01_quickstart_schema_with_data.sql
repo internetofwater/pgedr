@@ -23,15 +23,19 @@ INSERT INTO edr_quickstart.observations
 VALUES
 -- Central Park
 (1, 'TEMP', 22.5, '2025-09-10 09:00:00+00'::timestamptz),
+(1, 'TEMP', 21.5, '2025-09-10 10:00:00+00'::timestamptz),
 (1, 'AQI', 42, '2025-09-10 09:00:00+00'::timestamptz),
+(1, 'AQI', 37, '2025-09-10 10:00:00+00'::timestamptz),
 (1, 'HUM', 55, '2025-09-10 09:00:00+00'::timestamptz),
 
 -- Golden Gate Bridge
 (2, 'TEMP', 18.2, '2025-09-10 09:00:00+00'::timestamptz),
+(2, 'TEMP', 17.8, '2025-09-10 10:00:00+00'::timestamptz),
+(2, 'TEMP', 17.8, '2025-09-10 11:00:00+00'::timestamptz),
+(2, 'TEMP', 17.8, '2025-09-10 12:00:00+00'::timestamptz),
 (2, 'AQI', 58, '2025-09-10 09:00:00+00'::timestamptz),
 (2, 'HUM', 70, '2025-09-10 09:00:00+00'::timestamptz),
 
 -- Millennium Park
 (3, 'TEMP', 25.0, '2025-09-10 09:00:00+00'::timestamptz),
-(3, 'AQI', 35, '2025-09-10 09:00:00+00'::timestamptz),
-(3, 'HUM', 60, '2025-09-10 09:00:00+00'::timestamptz);
+(3, 'AQI', 35, '2025-09-10 09:00:00+00'::timestamptz);
