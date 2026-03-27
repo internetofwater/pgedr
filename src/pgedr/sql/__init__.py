@@ -226,12 +226,11 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         """
 
         bbox_filter = self._get_bbox_filter(bbox)
-        time_filter = self._get_datetime_filter(datetime_)
-        parameter_filters = self._get_parameter_filters(select_properties)
-        filters = [bbox_filter, parameter_filters, time_filter]
 
         location_query = self._select(
-            self.lc, self.gc, filters=filters
+            self.lc,
+            self.gc,
+            filters=[bbox_filter],
         ).distinct(self.lc)
 
         return self._fetch_all_locations(
@@ -265,12 +264,9 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         geom = WKTElement(wkt, srid=storage_srid, extended=False)  # type: ignore[reportArgumentType] WKTElement is typed to only accept integers despite allowing for srid=None
 
         area_filter = self.gc.intersects(geom)
-        time_filter = self._get_datetime_filter(datetime_)
-        parameter_filters = self._get_parameter_filters(select_properties)
-        filters = [area_filter, parameter_filters, time_filter]
 
         location_query = self._select(
-            self.lc, self.gc, filters=filters
+            self.lc, self.gc, filters=[area_filter]
         ).distinct(self.lc)
 
         return self._fetch_all_locations(
