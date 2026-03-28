@@ -226,12 +226,11 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         """
 
         bbox_filter = self._get_bbox_filter(bbox)
-        time_filter = self._get_datetime_filter(datetime_)
-        parameter_filters = self._get_parameter_filters(select_properties)
-        filters = [bbox_filter, parameter_filters, time_filter]
 
         location_query = self._select(
-            self.lc, self.gc, filters=filters
+            self.lc,
+            self.gc,
+            filters=[bbox_filter],
         ).distinct(self.lc)
 
         return self._fetch_all_locations(
@@ -265,12 +264,9 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         geom = WKTElement(wkt, srid=storage_srid, extended=False)  # type: ignore[reportArgumentType] WKTElement is typed to only accept integers despite allowing for srid=None
 
         area_filter = self.gc.intersects(geom)
-        time_filter = self._get_datetime_filter(datetime_)
-        parameter_filters = self._get_parameter_filters(select_properties)
-        filters = [area_filter, parameter_filters, time_filter]
 
         location_query = self._select(
-            self.lc, self.gc, filters=filters
+            self.lc, self.gc, filters=[area_filter]
         ).distinct(self.lc)
 
         return self._fetch_all_locations(
@@ -304,9 +300,9 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         """
 
         coverage = empty_coverage(id=location_id)
-        ranges = {}
         domain = coverage['domain']
         t_values: list = domain['axes']['t']['values']
+        ranges = {}
 
         parameter_filters = self._get_parameter_filters(select_properties)
         select_parameters = set(
@@ -355,10 +351,14 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
                 ranges[pname]['values'].append(value)
                 ranges[pname]['shape'][0] += 1
 
-        apply_domain_geometry(domain, geom)
-        if len(t_values) > 1:
-            domain['domainType'] += 'Series'
+        t_len = len(t_values)
+        if t_len == 0:
+            msg = f'No observations found for location {location_id}'
+            raise ProviderItemNotFoundError(msg)
 
+        apply_domain_geometry(domain, geom)
+        if t_len > 1:
+            domain['domainType'] += 'Series'
         coverage['parameters'] = self._get_parameters(parameter_names)
         coverage['ranges'] = {
             k: ranges[k] for k in ranges if k in parameter_names
@@ -389,14 +389,21 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         with Session(self._engine) as session:
             for location_id, geom in session.execute(location_query):
                 LOGGER.debug(f'Fetching coverage for {location_id}')
-                coverage = self.location(
-                    location_id=location_id,
-                    geom=geom,
-                    session=session,
-                    limit=limit,
-                    select_properties=select_properties,
-                    datetime_=datetime_,
-                )
+                try:
+                    coverage = self.location(
+                        location_id=location_id,
+                        geom=geom,
+                        session=session,
+                        limit=limit,
+                        select_properties=select_properties,
+                        datetime_=datetime_,
+                    )
+                except ProviderItemNotFoundError:
+                    LOGGER.warning(
+                        f'No observations found for location {location_id}, skipping.'
+                    )
+                    continue
+
                 coverage['domain'].pop('referencing')
                 parameters.update(coverage.pop('parameters'))
                 coverage_collection['coverages'].append(coverage)
@@ -555,8 +562,8 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         is_single_table = len(tables) == 1
 
         # Simple case: single table
-        if is_single_table and filters == []:
-            return select(*selections)
+        if is_single_table:
+            return select(*selections).filter(*filters)
 
         # Complex case: multiple tables or cross-table filters - need joins
         return (

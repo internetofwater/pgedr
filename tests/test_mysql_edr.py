@@ -50,16 +50,21 @@ def config(request):
                 'remote': 'id',
             },
         },
+        'additional_locations': 0,
     }
 
     if request.param == 'tables':
         return pygeoapi_config
 
     if request.param == 'views':
+        # Use remote table for parameters
         pygeoapi_config['edr_fields']['parameter_id'] = 'airport_parameters.id'
+        # This view will not filter on locations with observations
+        # unless filter applied
         pygeoapi_config['edr_fields']['location_field'] = (
             'airports.airport_locations.id'
         )
+        pygeoapi_config['additional_locations'] = 1
         return pygeoapi_config
 
 
@@ -136,10 +141,7 @@ def test_locations(config):
     locations = p.locations()
 
     assert locations['type'] == 'FeatureCollection'
-    assert len(locations['features']) == 4
-
-    feature = locations['features'][0]
-    assert feature['id'] == 'DCA'
+    assert len(locations['features']) == 4 + config['additional_locations']
 
 
 def test_locations_with_prop(config):
@@ -167,7 +169,7 @@ def test_locations_limit(config):
 
     locations = p.locations(limit=500)
     assert locations['type'] == 'FeatureCollection'
-    assert len(locations['features']) == 4
+    assert len(locations['features']) == 4 + config['additional_locations']
 
     locations = p.locations(limit=3)
     assert locations['type'] == 'FeatureCollection'
@@ -178,7 +180,7 @@ def test_locations_bbox(config):
     p = MySQLEDRProvider(config)
 
     locations = p.locations(bbox=[-77.5, 38, -76, 39])
-    assert len(locations['features']) == 3
+    assert len(locations['features']) == 3 + config['additional_locations']
 
 
 def test_cube(config):
@@ -195,7 +197,7 @@ def test_locations_select_param(config):
     p = MySQLEDRProvider(config)
 
     locations = p.locations()
-    assert len(locations['features']) == 4
+    assert len(locations['features']) == 4 + config['additional_locations']
 
     locations = p.locations(select_properties=['crashes'])
     assert len(locations['features']) == 3

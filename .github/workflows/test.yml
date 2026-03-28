@@ -11,18 +11,9 @@ jobs:
 
     steps:
       - name: Setup Python
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v6
         with:
-          python-version: "3.10"
-          architecture: x64
-      - name: Clear up GitHub runner diskspace
-        run: |
-          echo "Space before"
-          df -h /
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /usr/share/dotnet
-          echo "Space after"
-          df -h /
+          python-version: "3.12"
       - name: Checkout repository
         uses: actions/checkout@master
       - name: Start SQL databases
@@ -30,7 +21,7 @@ jobs:
           cp .env.example .env
           docker compose pull
           make database
-          sleep 5
+          sleep 15
       - name: Install uv
         uses: astral-sh/setup-uv@v5
       - name: Install python packages
