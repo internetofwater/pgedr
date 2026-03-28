@@ -57,12 +57,13 @@ def config(request):
         return pygeoapi_config
 
     if request.param == 'views':
+        # Use remote table for parameters
         pygeoapi_config['edr_fields']['parameter_id'] = 'airport_parameters.id'
+        # This view will not filter on locations with observations
+        # unless filter applied
         pygeoapi_config['edr_fields']['location_field'] = (
             'airports.airport_locations.id'
         )
-        # This view will not filter on locations with observations
-        # unless filter applied
         pygeoapi_config['additional_locations'] = 1
         return pygeoapi_config
 
