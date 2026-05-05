@@ -512,7 +512,22 @@ class RISEFeatureProvider(GenericSQLProvider):
 
         return feature
 
-    def query(self, properties=[], **kwargs):
+    def query(
+        self,
+        offset=0,
+        limit=10,
+        resulttype='results',
+        bbox=[],
+        datetime_=None,
+        properties=[],
+        sortby=[],
+        select_properties=[],
+        skip_geometry=False,
+        q=None,
+        filterq=None,
+        crs_transform_spec=None,
+        **kwargs,
+    ):
         """
         Query the provider for features with additional filtering applied
         """
@@ -521,7 +536,21 @@ class RISEFeatureProvider(GenericSQLProvider):
                 LOGGER.debug(f'Applying where clause: {col} = {val}')
                 properties.append([col, val])
 
-        return super().query(properties=properties, **kwargs)
+        return super().query(
+            offset=offset,
+            limit=limit,
+            resulttype=resulttype,
+            bbox=bbox,
+            datetime_=datetime_,
+            properties=properties,
+            sortby=sortby,
+            select_properties=select_properties,
+            skip_geometry=skip_geometry,
+            q=q,
+            filterq=filterq,
+            crs_transform_spec=crs_transform_spec,
+            **kwargs,
+        )
 
     def _get_bbox_filter(self, bbox: list[float]):
         """
