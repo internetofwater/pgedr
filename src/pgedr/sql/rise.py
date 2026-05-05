@@ -85,9 +85,13 @@ class RISEEDRProvider(BaseEDRProvider):
             self.db_conn,
             **self.db_options,
         )
-        [self.Location, self.Parameter, self.ParameterUnit, self.Results] = (
-            get_models(self._engine)
-        )
+        [
+            self.Location,
+            self.Parameter,
+            self.ParameterUnit,
+            self.Results,
+            self.Item,
+        ] = get_models(self._engine)
 
         # Determine `/locations` requires record present in results
         self.join_locations = provider_def.get('join_locations', True)
@@ -233,6 +237,8 @@ class RISEEDRProvider(BaseEDRProvider):
         parameter_query = (
             select(self.Results.parameterID)
             .filter(self.Results.locationID == location_id)
+            .join(self.Item, self.Item.itemID == self.Results.itemID)
+            .filter(self.Item.itemStatusID == 1)
             .distinct()
         )
         if self.active_status_id:
@@ -524,7 +530,7 @@ class RISEFeatureProvider(GenericSQLProvider):
                 return None
 
         if not self._fields:
-            for column in self.table_model.__table__.columns:
+            for column in self.table_model.__table__.columns:  # type: ignore
                 LOGGER.debug(f'Testing {column.name}')
                 if column.name == self.geom:
                     continue
@@ -673,5 +679,6 @@ def get_models(engine: Any) -> tuple:
     Parameter = Base.classes.parameter
     ParameterUnit = Base.classes.parameterUnit
     Results = Base.classes.results
+    Item = Base.classes.item
 
-    return Location, Parameter, ParameterUnit, Results
+    return Location, Parameter, ParameterUnit, Results, Item
