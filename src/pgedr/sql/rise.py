@@ -239,6 +239,7 @@ class RISEEDRProvider(BaseEDRProvider):
             .filter(self.Results.locationID == location_id)
             .join(self.Item, self.Item.itemID == self.Results.itemID)
             .filter(self.Item.itemRecordStatusID == 1)
+            .filter(self.Item.isModeled == 0)
             .distinct()
         )
         if self.active_status_id:
@@ -277,6 +278,9 @@ class RISEEDRProvider(BaseEDRProvider):
             .filter(self.Results.locationID == location_id)
             .filter(parameter_filters)
             .filter(time_filter)
+            .join(self.Item, self.Item.itemID == self.Results.itemID)
+            .filter(self.Item.itemRecordStatusID == 1)
+            .filter(self.Item.isModeled == 0)
             .distinct()
         )
 
@@ -434,6 +438,9 @@ class RISEEDRProvider(BaseEDRProvider):
             )
             .filter(self.Results.locationID == location_id)
             .filter(self.Results.parameterID == parameter)
+            .join(self.Item, self.Item.itemID == self.Results.itemID)
+            .filter(self.Item.itemRecordStatusID == 1)
+            .filter(self.Item.isModeled == 0)
             .subquery()
         )
         model = aliased(self.Results, parameter_query)
