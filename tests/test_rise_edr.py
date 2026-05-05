@@ -28,7 +28,7 @@ def config():
 def test_get_fields(config):
     p = RISEEDRProvider(config)
 
-    assert len(p.fields) == 1574
+    assert len(p.fields) == 533
 
 
 def test_get_locations(config):
@@ -49,7 +49,7 @@ def test_get_locations(config):
 
 
 def test_get_locations_with_joining_locations(config):
-    config['join_locations'] = True
+    config['join_locations'] = False
     p = RISEEDRProvider(config)
 
     response = p.locations()
@@ -124,23 +124,23 @@ def test_get_location(config):
         # Valid location ID but no data should raise error
         response = p.location(location_id='1')
 
-    response = p.location(location_id='501')
+    response = p.location(location_id='3206')
     assert len(response['domain']['axes']['t']['values']) == 100
-    assert len(response['ranges']['18']['values']) == 100
-    assert len(response['ranges']) == 3
+    assert len(response['ranges']['3']['values']) == 100
+    assert len(response['ranges']) == 1
 
 
 def test_get_location_with_sorted_results(config):
     p = RISEEDRProvider(config)
 
-    response = p.location(location_id='501')
+    response = p.location(location_id='3206')
     t_values = response['domain']['axes']['t']['values']
     assert t_values != sorted(t_values, reverse=True)
 
     config['sort_results'] = True
     p = RISEEDRProvider(config)
 
-    response = p.location(location_id='501')
+    response = p.location(location_id='3206')
     t_values = response['domain']['axes']['t']['values']
     assert t_values == sorted(t_values, reverse=True)
 
@@ -148,10 +148,10 @@ def test_get_location_with_sorted_results(config):
 def test_get_location_with_limit(config):
     p = RISEEDRProvider(config)
 
-    response = p.location(location_id='501', limit=10)
+    response = p.location(location_id='3206', limit=10)
     assert len(response['domain']['axes']['t']['values']) == 10
-    assert len(response['ranges']['18']['values']) == 10
-    assert len(response['ranges']) == 3
+    assert len(response['ranges']['3']['values']) == 10
+    assert len(response['ranges']) == 1
 
 
 def test_get_location_with_param(config):
@@ -160,12 +160,12 @@ def test_get_location_with_param(config):
     with pytest.raises(ProviderNoDataError):
         # Valid location ID but no data for parameter should raise error
         response = p.location(
-            location_id='501', select_properties=['not_a_real_parameter']
+            location_id='3206', select_properties=['not_a_real_parameter']
         )
 
-    response = p.location(location_id='501', select_properties=[18])
+    response = p.location(location_id='3206', select_properties=[3])
     assert len(response['domain']['axes']['t']['values']) == 100
-    assert len(response['ranges']['18']['values']) == 100
+    assert len(response['ranges']['3']['values']) == 100
     assert len(response['ranges']) == 1
 
 
@@ -174,19 +174,19 @@ def test_get_location_with_datetime(config):
 
     with pytest.raises(ProviderNoDataError):
         # Valid location ID but no data for datetime should raise error
-        response = p.location(location_id='501', datetime_='2020-01-01')
+        response = p.location(location_id='3206', datetime_='2020-01-01')
 
     response = p.location(
-        location_id='501', datetime_='2020-01-01T00:00:00Z/..'
+        location_id='3206', datetime_='2000-01-01T00:00:00Z/..'
     )
     assert len(response['domain']['axes']['t']['values']) == 100
-    assert len(response['ranges']['18']['values']) == 100
-    assert len(response['ranges']) == 3
+    assert len(response['ranges']['3']['values']) == 100
+    assert len(response['ranges']) == 1
 
     response = p.location(
-        location_id='501',
-        datetime_='2020-01-01T00:00:00Z/2020-02-01T00:00:00Z',
+        location_id='3206',
+        datetime_='2003-01-01T00:00:00Z/2003-02-01T00:00:00Z',
     )
     assert len(response['domain']['axes']['t']['values']) == 31
-    assert len(response['ranges']['18']['values']) == 31
-    assert len(response['ranges']) == 3
+    assert len(response['ranges']['3']['values']) == 31
+    assert len(response['ranges']) == 1

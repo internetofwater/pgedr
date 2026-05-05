@@ -4,6 +4,8 @@
 import logging
 
 from copy import deepcopy
+from datetime import datetime
+from decimal import Decimal
 import functools
 from typing import Optional, Any
 
@@ -83,12 +85,20 @@ class RISEEDRProvider(BaseEDRProvider):
             self.db_conn,
             **self.db_options,
         )
-        [self.Location, self.Parameter, self.ParameterUnit, self.Results] = (
-            get_models(self._engine)
-        )
+        [
+            self.Location,
+            self.Parameter,
+            self.ParameterUnit,
+            self.Results,
+            self.Item,
+        ] = get_models(self._engine)
 
-        self.join_locations = provider_def.get('join_locations', False)
+        # Determine `/locations` requires record present in results
+        self.join_locations = provider_def.get('join_locations', True)
+        # Whether to sort results by dateTime in descending order
         self.sort_results = provider_def.get('sort_results', False)
+        # StatusID of 1 indicates active records in the database
+        self.active_status_id = provider_def.get('active_status_id', True)
 
         self.get_fields()
         LOGGER.debug('Initialized RISE EDR provider')
@@ -111,6 +121,9 @@ class RISEEDRProvider(BaseEDRProvider):
                     self.Parameter.parameterDescription,
                     self.ParameterUnit.parameterUnit,
                 ).join(self.ParameterUnit)
+
+                if self.active_status_id:
+                    query = query.filter(self.Parameter.parameterStatusID == 1)
 
                 result = self._compile_and_execute(session, query)
                 for pid, pname, pdesc, punit in result:
@@ -170,10 +183,13 @@ class RISEEDRProvider(BaseEDRProvider):
             self.Location.locationCoordinates,
         )
 
+        if self.active_status_id:
+            query.filter(self.Location.locationStatusID == 1)
+
         if bbox_filter is not True:
             query = query.filter(bbox_filter)
 
-        if not self.join_locations or filters != [True, True]:
+        if self.join_locations or not time_filter or not parameter_filters:
             # Only apply joins if there are filters to apply
             query = query.join(
                 self.Results,
@@ -215,16 +231,19 @@ class RISEEDRProvider(BaseEDRProvider):
 
         :returns: A CovJSON of location data.
         """
-        query = (
-            select(self.Location.locationCoordinates)
-            .filter(self.Location.locationID == location_id)
-            .limit(1)
+        query = select(self.Location.locationCoordinates).filter(
+            self.Location.locationID == location_id
         )
         parameter_query = (
             select(self.Results.parameterID)
             .filter(self.Results.locationID == location_id)
+            .join(self.Item, self.Item.itemID == self.Results.itemID)
+            .filter(self.Item.itemRecordStatusID == 1)
+            .filter(self.Item.isModeled == 0)
             .distinct()
         )
+        if self.active_status_id:
+            query = query.filter(self.Location.locationStatusID == 1)
         with Session(self._engine) as session:
             geom = self._compile_and_execute(session, query).scalar()
             if not geom:
@@ -259,6 +278,9 @@ class RISEEDRProvider(BaseEDRProvider):
             .filter(self.Results.locationID == location_id)
             .filter(parameter_filters)
             .filter(time_filter)
+            .join(self.Item, self.Item.itemID == self.Results.itemID)
+            .filter(self.Item.itemRecordStatusID == 1)
+            .filter(self.Item.isModeled == 0)
             .distinct()
         )
 
@@ -314,7 +336,7 @@ class RISEEDRProvider(BaseEDRProvider):
         :returns: A dictionary containing the parameter definition.
         """
         if not parameters:
-            parameters = set(self.fields.keys())
+            parameters = set(self.fields)
 
         out_params = {}
         for param in set(parameters):
@@ -416,6 +438,9 @@ class RISEEDRProvider(BaseEDRProvider):
             )
             .filter(self.Results.locationID == location_id)
             .filter(self.Results.parameterID == parameter)
+            .join(self.Item, self.Item.itemID == self.Results.itemID)
+            .filter(self.Item.itemRecordStatusID == 1)
+            .filter(self.Item.isModeled == 0)
             .subquery()
         )
         model = aliased(self.Results, parameter_query)
@@ -457,6 +482,80 @@ class RISEFeatureProvider(GenericSQLProvider):
         driver_name = 'mysql+pymysql'
         extra_conn_args = {'charset': 'utf8mb4'}
         super().__init__(provider_def, driver_name, extra_conn_args)
+        self.where_clauses = provider_def.get('where_clauses', [])
+
+    def get_fields(self):
+        """
+        Return fields (columns) from database table
+
+        :returns: dict of fields
+        """
+
+        LOGGER.debug('Get available fields/properties')
+
+        # sql-schema only allows these types, so we need to map from sqlalchemy
+        # string, number, integer, object, array, boolean, null,
+        # https://json-schema.org/understanding-json-schema/reference/type.html
+        column_type_map = {
+            bool: 'boolean',
+            datetime: 'string',
+            Decimal: 'number',
+            dict: 'object',
+            float: 'number',
+            int: 'integer',
+            str: 'string',
+        }
+        default_type = 'string'
+
+        # https://json-schema.org/understanding-json-schema/reference/string#built-in-formats  # noqa
+        column_format_map = {
+            'date': 'date',
+            'interval': 'duration',
+            'time': 'time',
+            'timestamp': 'date-time',
+        }
+
+        def _column_type_to_json_schema_type(column_type):
+            try:
+                python_type = column_type.python_type
+            except NotImplementedError:
+                LOGGER.warning(f'Unsupported column type {column_type}')
+                return default_type
+            else:
+                try:
+                    return column_type_map[python_type]
+                except KeyError:
+                    LOGGER.warning(f'Unsupported column type {column_type}')
+                    return default_type
+
+        def _column_format_to_json_schema_format(column_type):
+            try:
+                ct = str(column_type).lower()
+                return column_format_map[ct]
+            except KeyError:
+                LOGGER.debug('No string format detected')
+                return None
+
+        if not self._fields:
+            for column in self.table_model.__table__.columns:  # type: ignore
+                LOGGER.debug(f'Testing {column.name}')
+                if column.name == self.geom:
+                    continue
+
+                if self.properties and column.name not in self.properties:
+                    LOGGER.debug(
+                        f'Skipping column {column.name} not in properties list'
+                    )
+                    continue
+
+                self._fields[str(column.name)] = {
+                    'type': _column_type_to_json_schema_type(column.type),
+                    'format': _column_format_to_json_schema_format(
+                        column.type
+                    ),
+                }
+
+        return self._fields
 
     def get(self, identifier, crs_transform_spec=None, **kwargs):
         """
@@ -479,6 +578,10 @@ class RISEFeatureProvider(GenericSQLProvider):
                 # Ensure returned row has exact match
                 feature_id = getattr(item, self.id_field)
                 assert str(feature_id) == identifier
+                # Ensure return row has active status
+                if hasattr(item, 'locationStatusID'):
+                    status_id = getattr(item, 'locationStatusID')
+                    assert status_id == 1
             except AssertionError as e:
                 LOGGER.debug(e, exc_info=True)
                 msg = f'No such item: {self.id_field}={identifier}.'
@@ -496,6 +599,46 @@ class RISEFeatureProvider(GenericSQLProvider):
                     props.pop(item)
 
         return feature
+
+    def query(
+        self,
+        offset=0,
+        limit=10,
+        resulttype='results',
+        bbox=[],
+        datetime_=None,
+        properties=[],
+        sortby=[],
+        select_properties=[],
+        skip_geometry=False,
+        q=None,
+        filterq=None,
+        crs_transform_spec=None,
+        **kwargs,
+    ):
+        """
+        Query the provider for features with additional filtering applied
+        """
+        if self.where_clauses:
+            for col, val in self.where_clauses.items():
+                LOGGER.debug(f'Applying where clause: {col} = {val}')
+                properties.append([col, val])
+
+        return super().query(
+            offset=offset,
+            limit=limit,
+            resulttype=resulttype,
+            bbox=bbox,
+            datetime_=datetime_,
+            properties=properties,
+            sortby=sortby,
+            select_properties=select_properties,
+            skip_geometry=skip_geometry,
+            q=q,
+            filterq=filterq,
+            crs_transform_spec=crs_transform_spec,
+            **kwargs,
+        )
 
     def _get_bbox_filter(self, bbox: list[float]):
         """
@@ -543,5 +686,6 @@ def get_models(engine: Any) -> tuple:
     Parameter = Base.classes.parameter
     ParameterUnit = Base.classes.parameterUnit
     Results = Base.classes.results
+    Item = Base.classes.item
 
-    return Location, Parameter, ParameterUnit, Results
+    return Location, Parameter, ParameterUnit, Results, Item
