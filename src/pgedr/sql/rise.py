@@ -87,8 +87,12 @@ class RISEEDRProvider(BaseEDRProvider):
             get_models(self._engine)
         )
 
-        self.join_locations = provider_def.get('join_locations', False)
+        # Determine `/locations` requires record present in results
+        self.join_locations = provider_def.get('join_locations', True)
+        # Whether to sort results by dateTime in descending order
         self.sort_results = provider_def.get('sort_results', False)
+        # StatusID of 1 indicates active records in the database
+        self.active_status_id = provider_def.get('active_status_id', True)
 
         self.get_fields()
         LOGGER.debug('Initialized RISE EDR provider')
@@ -111,6 +115,9 @@ class RISEEDRProvider(BaseEDRProvider):
                     self.Parameter.parameterDescription,
                     self.ParameterUnit.parameterUnit,
                 ).join(self.ParameterUnit)
+
+                if self.active_status_id:
+                    query = query.filter(self.Parameter.parameterStatusID == 1)
 
                 result = self._compile_and_execute(session, query)
                 for pid, pname, pdesc, punit in result:
@@ -170,10 +177,13 @@ class RISEEDRProvider(BaseEDRProvider):
             self.Location.locationCoordinates,
         )
 
+        if self.active_status_id:
+            query.filter(self.Location.locationStatusID == 1)
+
         if bbox_filter is not True:
             query = query.filter(bbox_filter)
 
-        if not self.join_locations or filters != [True, True]:
+        if self.join_locations or not time_filter or not parameter_filters:
             # Only apply joins if there are filters to apply
             query = query.join(
                 self.Results,
@@ -215,16 +225,16 @@ class RISEEDRProvider(BaseEDRProvider):
 
         :returns: A CovJSON of location data.
         """
-        query = (
-            select(self.Location.locationCoordinates)
-            .filter(self.Location.locationID == location_id)
-            .limit(1)
+        query = select(self.Location.locationCoordinates).filter(
+            self.Location.locationID == location_id
         )
         parameter_query = (
             select(self.Results.parameterID)
             .filter(self.Results.locationID == location_id)
             .distinct()
         )
+        if self.active_status_id:
+            query = query.filter(self.Location.locationStatusID == 1)
         with Session(self._engine) as session:
             geom = self._compile_and_execute(session, query).scalar()
             if not geom:
@@ -314,7 +324,7 @@ class RISEEDRProvider(BaseEDRProvider):
         :returns: A dictionary containing the parameter definition.
         """
         if not parameters:
-            parameters = set(self.fields.keys())
+            parameters = set(self.fields)
 
         out_params = {}
         for param in set(parameters):
@@ -457,6 +467,7 @@ class RISEFeatureProvider(GenericSQLProvider):
         driver_name = 'mysql+pymysql'
         extra_conn_args = {'charset': 'utf8mb4'}
         super().__init__(provider_def, driver_name, extra_conn_args)
+        self.where_clauses = provider_def.get('where_clauses', [])
 
     def get(self, identifier, crs_transform_spec=None, **kwargs):
         """
@@ -479,6 +490,10 @@ class RISEFeatureProvider(GenericSQLProvider):
                 # Ensure returned row has exact match
                 feature_id = getattr(item, self.id_field)
                 assert str(feature_id) == identifier
+                # Ensure return row has active status
+                if hasattr(item, 'locationStatusID'):
+                    status_id = getattr(item, 'locationStatusID')
+                    assert status_id == 1
             except AssertionError as e:
                 LOGGER.debug(e, exc_info=True)
                 msg = f'No such item: {self.id_field}={identifier}.'
@@ -496,6 +511,17 @@ class RISEFeatureProvider(GenericSQLProvider):
                     props.pop(item)
 
         return feature
+
+    def query(self, properties=[], **kwargs):
+        """
+        Query the provider for features with additional filtering applied
+        """
+        if self.where_clauses:
+            for col, val in self.where_clauses.items():
+                LOGGER.debug(f'Applying where clause: {col} = {val}')
+                properties.append([col, val])
+
+        return super().query(properties=properties, **kwargs)
 
     def _get_bbox_filter(self, bbox: list[float]):
         """

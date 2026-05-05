@@ -28,7 +28,7 @@ def config():
 def test_get_fields(config):
     p = RISEEDRProvider(config)
 
-    assert len(p.fields) == 1574
+    assert len(p.fields) == 533
 
 
 def test_get_locations(config):
@@ -49,7 +49,7 @@ def test_get_locations(config):
 
 
 def test_get_locations_with_joining_locations(config):
-    config['join_locations'] = True
+    config['join_locations'] = False
     p = RISEEDRProvider(config)
 
     response = p.locations()
