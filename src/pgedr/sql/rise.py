@@ -238,7 +238,7 @@ class RISEEDRProvider(BaseEDRProvider):
             select(self.Results.parameterID)
             .filter(self.Results.locationID == location_id)
             .join(self.Item, self.Item.itemID == self.Results.itemID)
-            .filter(self.Item.itemStatusID == 1)
+            .filter(self.Item.itemRecordStatusID == 1)
             .distinct()
         )
         if self.active_status_id:
