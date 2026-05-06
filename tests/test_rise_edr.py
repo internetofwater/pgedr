@@ -32,6 +32,7 @@ def test_get_fields(config):
 
 
 def test_get_locations(config):
+    config['join_locations'] = True
     p = RISEEDRProvider(config)
 
     response = p.locations()
@@ -48,8 +49,7 @@ def test_get_locations(config):
     assert len(response['features']) == 5
 
 
-def test_get_locations_with_joining_locations(config):
-    config['join_locations'] = False
+def test_get_locations_without_joining_locations(config):
     p = RISEEDRProvider(config)
 
     response = p.locations()
@@ -62,8 +62,8 @@ def test_get_locations_with_joining_locations(config):
     assert len(response['features']) == 10
 
     response = p.locations(limit=1000)
-    assert response['numberReturned'] == 646
-    assert len(response['features']) == 646
+    assert response['numberReturned'] == 580
+    assert len(response['features']) == 580
 
 
 def test_get_locations_with_param(config):
@@ -75,7 +75,6 @@ def test_get_locations_with_param(config):
     assert len(response['features']) == 1
 
     response = p.locations(select_properties=[50, 3])
-
     assert response['numberReturned'] == 4
     assert len(response['features']) == 4
 
@@ -86,6 +85,14 @@ def test_get_locations_with_param(config):
 
 
 def test_locations_with_bbox(config):
+    p = RISEEDRProvider(config)
+
+    response = p.locations(bbox=[-112, 31, -101, 40])
+
+    assert response['numberReturned'] == 100
+    assert len(response['features']) == 100
+
+    config['join_locations'] = True
     p = RISEEDRProvider(config)
 
     response = p.locations(bbox=[-112, 31, -101, 40])
@@ -190,3 +197,13 @@ def test_get_location_with_datetime(config):
     assert len(response['domain']['axes']['t']['values']) == 31
     assert len(response['ranges']['3']['values']) == 31
     assert len(response['ranges']) == 1
+
+
+def test_get_location_with_multiple_params(config):
+    p = RISEEDRProvider(config)
+
+    response = p.location(location_id='501', select_properties=[2, 18, 3])
+    assert len(response['domain']['axes']['t']['values']) == 100
+    assert len(response['ranges']['2']['values']) == 100
+    assert len(response['ranges']['18']['values']) == 100
+    assert len(response['ranges']) == 2
