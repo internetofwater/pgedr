@@ -355,12 +355,7 @@ class RISEEDRProvider(BaseEDRProvider):
                 parameter,
                 location_id,
             )
-        LOGGER.error(
-            results.compile(
-                compile_kwargs={'literal_binds': True},
-                dialect=self._engine.dialect,
-            )
-        )
+
         with Session(self._engine) as session:
             # Construct the query
             parameter_names = set()
