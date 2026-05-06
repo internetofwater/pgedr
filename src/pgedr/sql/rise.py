@@ -16,7 +16,7 @@ from sqlalchemy.orm import (
     Session,
     aliased,
 )
-from sqlalchemy.sql.expression import or_, and_
+from sqlalchemy.sql.expression import and_
 
 from pygeoapi.crs import get_transform_from_spec, get_srid
 from pygeoapi.provider.base import (
@@ -318,7 +318,7 @@ class RISEEDRProvider(BaseEDRProvider):
         parameter_filters = self._get_parameter_filters(select_properties)
         time_filter = self._get_datetime_filter(datetime_)
 
-        results = (
+        results_subquery = (
             select(self.Results.dateTime)
             .filter(self.Results.locationID == location_id)
             .filter(parameter_filters)
@@ -326,7 +326,7 @@ class RISEEDRProvider(BaseEDRProvider):
         )
 
         if self.force_ignore_modeled:
-            results = results.filter(
+            results_subquery = results_subquery.filter(
                 exists()
                 .where(self.Results.itemID == self.Item.itemID)
                 .where(self.Item.itemRecordStatusID == 1)
@@ -334,15 +334,33 @@ class RISEEDRProvider(BaseEDRProvider):
             )
 
         if self.sort_results:
-            results = results.order_by(self.Results.dateTime.desc())
+            results_subquery = results_subquery.order_by(
+                self.Results.dateTime.desc()
+            )
 
-        results = results.limit(limit)
+        # Wrap the base datetime query as a subquery so that GROUP BY + LIMIT
+        # are evaluated before the per-parameter joins are added.
+        results_subquery = (
+            results_subquery.group_by(self.Results.dateTime)
+            .limit(limit)
+            .subquery('result_times')
+        )
+        results = select(results_subquery.c.dateTime)
 
         for parameter in select_parameters:
             ranges[parameter] = empty_range()
             results = self._construct_parameter_query(
-                results, parameter, location_id
+                results,
+                results_subquery,
+                parameter,
+                location_id,
             )
+        LOGGER.error(
+            results.compile(
+                compile_kwargs={'literal_binds': True},
+                dialect=self._engine.dialect,
+            )
+        )
         with Session(self._engine) as session:
             # Construct the query
             parameter_names = set()
@@ -420,11 +438,7 @@ class RISEEDRProvider(BaseEDRProvider):
         if not parameters:
             return True  # Let everything through
 
-        # Convert parameter filters into SQL Alchemy filters
-        filter_group = [
-            self.Results.parameterID == str(value) for value in parameters
-        ]
-        return or_(*filter_group)
+        return self.Results.parameterID.in_([str(v) for v in parameters])
 
     def _get_datetime_filter(self, datetime_: Optional[str]) -> Any:
         if datetime_ in (None, '../..'):
@@ -469,12 +483,13 @@ class RISEEDRProvider(BaseEDRProvider):
         return bbox_filter
 
     def _construct_parameter_query(
-        self, query: Any, parameter: str, location_id: str
+        self, query: Any, subquery: Any, parameter: str, location_id: str
     ):
         """
         Construct a query for a specific parameter and join to main query.
 
         :param query: The main SQLAlchemy query to join to.
+        :param subquery: The subquery to join with.
         :param parameter: The parameter ID to filter by.
         :param location_id: The location ID to filter by.
 
@@ -500,7 +515,7 @@ class RISEEDRProvider(BaseEDRProvider):
         model = aliased(self.Results, parameter_query.subquery())
         parameter_column = model.result.label(parameter)
         return query.join(
-            model, self.Results.dateTime == model.dateTime
+            model, subquery.c.dateTime == model.dateTime
         ).add_columns(parameter_column)
 
     def _compile_and_execute(self, session, query):
@@ -737,9 +752,7 @@ class RISEFeatureProvider(GenericSQLProvider):
         for column_name, values in grouped.items():
             column = getattr(self.table_model, column_name)
 
-            # OR all values for the same column
-            column_filters = [column == value for value in values]
-            or_groups.append(or_(*column_filters))
+            or_groups.append(column.in_(values))
 
         # OR across different columns
         return and_(*or_groups)
