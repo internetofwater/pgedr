@@ -41,7 +41,6 @@ LOGGER = logging.getLogger(__name__)
 
 
 LOCATION_TYPE_IDS = [
-    # Exclude 38 (Worldwide)
     1,
     2,
     3,
@@ -59,6 +58,8 @@ LOCATION_TYPE_IDS = [
     28,
     29,
     25,
+    35,
+    # Exclude 38 (Worldwide)
     39,
     40,
     41,
@@ -126,6 +127,10 @@ class RISEEDRProvider(BaseEDRProvider):
         # StatusID of 1 indicates active records in the database
         self.active_status_id: bool = provider_def.get(
             'active_status_id', True
+        )
+        # Whether to exclude modeled results (isModeled=1) from queries
+        self.force_ignore_modeled: bool = provider_def.get(
+            'force_ignore_modeled', True
         )
 
         self.get_fields()
@@ -318,16 +323,20 @@ class RISEEDRProvider(BaseEDRProvider):
             .filter(self.Results.locationID == location_id)
             .filter(parameter_filters)
             .filter(time_filter)
-            .join(self.Item, self.Item.itemID == self.Results.itemID)
-            .filter(self.Item.itemRecordStatusID == 1)
-            .filter(self.Item.isModeled == 0)
-            .distinct()
         )
+
+        if self.force_ignore_modeled:
+            results = results.filter(
+                exists()
+                .where(self.Results.itemID == self.Item.itemID)
+                .where(self.Item.itemRecordStatusID == 1)
+                .where(self.Item.isModeled == 0)
+            )
 
         if self.sort_results:
             results = results.order_by(self.Results.dateTime.desc())
 
-        results = results.limit(limit)
+        results = results.distinct().limit(limit)
 
         for parameter in select_parameters:
             ranges[parameter] = empty_range()
@@ -478,12 +487,17 @@ class RISEEDRProvider(BaseEDRProvider):
             )
             .filter(self.Results.locationID == location_id)
             .filter(self.Results.parameterID == parameter)
-            .join(self.Item, self.Item.itemID == self.Results.itemID)
-            .filter(self.Item.itemRecordStatusID == 1)
-            .filter(self.Item.isModeled == 0)
-            .subquery()
         )
-        model = aliased(self.Results, parameter_query)
+
+        if self.force_ignore_modeled:
+            parameter_query = parameter_query.filter(
+                exists()
+                .where(self.Results.itemID == self.Item.itemID)
+                .where(self.Item.itemRecordStatusID == 1)
+                .where(self.Item.isModeled == 0)
+            )
+
+        model = aliased(self.Results, parameter_query.subquery())
         parameter_column = model.result.label(parameter)
         return query.join(
             model, self.Results.dateTime == model.dateTime
@@ -524,8 +538,7 @@ class RISEFeatureProvider(GenericSQLProvider):
         super().__init__(provider_def, driver_name, extra_conn_args)
         self.where_clauses = provider_def.get(
             'where_clauses',
-            # {'locationStatusID': 1, 'locationTypeID': LOCATION_TYPE_IDS},
-            {},
+            {'locationStatusID': 1, 'locationTypeID': LOCATION_TYPE_IDS},
         )
 
     def get_fields(self):
