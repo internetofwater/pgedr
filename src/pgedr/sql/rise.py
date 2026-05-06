@@ -678,7 +678,7 @@ class RISEFeatureProvider(GenericSQLProvider):
         """
         if self.where_clauses:
             for col, val in self.where_clauses.items():
-                LOGGER.error(f'Applying where clause: {col} = {val}')
+                LOGGER.debug(f'Applying where clause: {col} = {val}')
                 if isinstance(val, list):
                     properties.extend([col, str(v).strip()] for v in val)
                 else:
