@@ -336,7 +336,7 @@ class RISEEDRProvider(BaseEDRProvider):
         if self.sort_results:
             results = results.order_by(self.Results.dateTime.desc())
 
-        results = results.distinct().limit(limit)
+        results = results.limit(limit)
 
         for parameter in select_parameters:
             ranges[parameter] = empty_range()
