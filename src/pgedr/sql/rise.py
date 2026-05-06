@@ -738,7 +738,8 @@ class RISEFeatureProvider(GenericSQLProvider):
             column = getattr(self.table_model, column_name)
 
             # OR all values for the same column
-            or_groups.append(or_(column == v for v in values))
+            column_filters = [column == value for value in values]
+            or_groups.append(or_(*column_filters))
 
         # OR across different columns
         return and_(*or_groups)
