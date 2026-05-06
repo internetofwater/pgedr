@@ -4,18 +4,19 @@
 import logging
 
 from copy import deepcopy
+from collections import defaultdict
 from datetime import datetime
 from decimal import Decimal
 import functools
 from typing import Optional, Any
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, exists
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import (
     Session,
     aliased,
 )
-from sqlalchemy.sql.expression import or_
+from sqlalchemy.sql.expression import and_
 
 from pygeoapi.crs import get_transform_from_spec, get_srid
 from pygeoapi.provider.base import (
@@ -37,6 +38,32 @@ from pgedr.lib import (
 )
 
 LOGGER = logging.getLogger(__name__)
+
+
+LOCATION_TYPE_IDS = [
+    1,
+    2,
+    3,
+    4,
+    9,
+    10,
+    12,
+    15,
+    16,
+    17,
+    22,
+    23,
+    25,
+    27,
+    28,
+    29,
+    25,
+    35,
+    # Exclude 38 (Worldwide)
+    39,
+    40,
+    41,
+]
 
 
 class RISEEDRProvider(BaseEDRProvider):
@@ -94,11 +121,17 @@ class RISEEDRProvider(BaseEDRProvider):
         ] = get_models(self._engine)
 
         # Determine `/locations` requires record present in results
-        self.join_locations = provider_def.get('join_locations', True)
+        self.join_locations: bool = provider_def.get('join_locations', False)
         # Whether to sort results by dateTime in descending order
-        self.sort_results = provider_def.get('sort_results', False)
+        self.sort_results: bool = provider_def.get('sort_results', False)
         # StatusID of 1 indicates active records in the database
-        self.active_status_id = provider_def.get('active_status_id', True)
+        self.active_status_id: bool = provider_def.get(
+            'active_status_id', True
+        )
+        # Whether to exclude modeled results (isModeled=1) from queries
+        self.force_ignore_modeled: bool = provider_def.get(
+            'force_ignore_modeled', True
+        )
 
         self.get_fields()
         LOGGER.debug('Initialized RISE EDR provider')
@@ -124,6 +157,8 @@ class RISEEDRProvider(BaseEDRProvider):
 
                 if self.active_status_id:
                     query = query.filter(self.Parameter.parameterStatusID == 1)
+
+                query = query.distinct()
 
                 result = self._compile_and_execute(session, query)
                 for pid, pname, pdesc, punit in result:
@@ -175,26 +210,32 @@ class RISEEDRProvider(BaseEDRProvider):
         bbox_filter = self._get_bbox_filter(bbox)
         time_filter = self._get_datetime_filter(datetime_)
         parameter_filters = self._get_parameter_filters(select_properties)
-        filters = [time_filter, parameter_filters]
 
         query = select(
             self.Location.locationID,
             self.Location.locationName,
             self.Location.locationCoordinates,
-        )
+        ).filter(self.Location.locationTypeID != 38)
 
         if self.active_status_id:
-            query.filter(self.Location.locationStatusID == 1)
+            query = query.filter(self.Location.locationStatusID == 1)
+
+        # Only apply joins if there are filters to apply
+        join_conditions = [
+            self.join_locations is True,
+            time_filter is not True,
+            parameter_filters is not True,
+        ]
+        if any(join_conditions):
+            query = query.where(
+                exists()
+                .where(self.Results.locationID == self.Location.locationID)
+                .where(time_filter)
+                .where(parameter_filters)
+            )
 
         if bbox_filter is not True:
             query = query.filter(bbox_filter)
-
-        if self.join_locations or not time_filter or not parameter_filters:
-            # Only apply joins if there are filters to apply
-            query = query.join(
-                self.Results,
-                self.Results.locationID == self.Location.locationID,
-            ).filter(*filters)
 
         query = query.distinct().limit(limit)
 
@@ -234,36 +275,40 @@ class RISEEDRProvider(BaseEDRProvider):
         query = select(self.Location.locationCoordinates).filter(
             self.Location.locationID == location_id
         )
+
+        if self.active_status_id:
+            query = query.filter(self.Location.locationStatusID == 1)
+
         parameter_query = (
             select(self.Results.parameterID)
             .filter(self.Results.locationID == location_id)
-            .join(self.Item, self.Item.itemID == self.Results.itemID)
-            .filter(self.Item.itemRecordStatusID == 1)
-            .filter(self.Item.isModeled == 0)
-            .distinct()
+            .where(
+                exists()
+                .where(self.Results.itemID == self.Item.itemID)
+                .where(self.Item.itemRecordStatusID == 1)
+                .where(self.Item.isModeled == 0)
+            )
         )
-        if self.active_status_id:
-            query = query.filter(self.Location.locationStatusID == 1)
+
+        if select_properties:
+            parameter_filters = self._get_parameter_filters(select_properties)
+            parameter_query = parameter_query.filter(parameter_filters)
+
         with Session(self._engine) as session:
             geom = self._compile_and_execute(session, query).scalar()
             if not geom:
                 msg = f'Location not found: {location_id}'
                 raise ProviderItemNotFoundError(msg)
 
-            if select_properties:
-                select_parameters = set(map(str, select_properties))
-            else:
-                select_parameters = set(
-                    [
-                        str(pid)
-                        for (pid,) in self._compile_and_execute(
-                            session, parameter_query
-                        )
-                    ]
+            select_parameters = {
+                str(pid)
+                for (pid,) in self._compile_and_execute(
+                    session, parameter_query.distinct()
                 )
-                if len(select_parameters) == 0:
-                    msg = f'Location has no data found: {location_id}'
-                    raise ProviderNoDataError(msg)
+            }
+            if len(select_parameters) == 0:
+                msg = f'Location has no data found: {location_id}'
+                raise ProviderNoDataError(msg)
 
         coverage = empty_coverage(id=location_id)
         domain = coverage['domain']
@@ -273,27 +318,44 @@ class RISEEDRProvider(BaseEDRProvider):
         parameter_filters = self._get_parameter_filters(select_properties)
         time_filter = self._get_datetime_filter(datetime_)
 
-        results = (
+        results_subquery = (
             select(self.Results.dateTime)
             .filter(self.Results.locationID == location_id)
             .filter(parameter_filters)
             .filter(time_filter)
-            .join(self.Item, self.Item.itemID == self.Results.itemID)
-            .filter(self.Item.itemRecordStatusID == 1)
-            .filter(self.Item.isModeled == 0)
-            .distinct()
         )
 
-        if self.sort_results:
-            results = results.order_by(self.Results.dateTime.desc())
+        if self.force_ignore_modeled:
+            results_subquery = results_subquery.filter(
+                exists()
+                .where(self.Results.itemID == self.Item.itemID)
+                .where(self.Item.itemRecordStatusID == 1)
+                .where(self.Item.isModeled == 0)
+            )
 
-        results = results.limit(limit)
+        if self.sort_results:
+            results_subquery = results_subquery.order_by(
+                self.Results.dateTime.desc()
+            )
+
+        # Wrap the base datetime query as a subquery so that GROUP BY + LIMIT
+        # are evaluated before the per-parameter joins are added.
+        results_subquery = (
+            results_subquery.group_by(self.Results.dateTime)
+            .limit(limit)
+            .subquery('result_times')
+        )
+        results = select(results_subquery.c.dateTime)
 
         for parameter in select_parameters:
             ranges[parameter] = empty_range()
             results = self._construct_parameter_query(
-                results, parameter, location_id
+                results,
+                results_subquery,
+                parameter,
+                location_id,
             )
+
         with Session(self._engine) as session:
             # Construct the query
             parameter_names = set()
@@ -371,11 +433,7 @@ class RISEEDRProvider(BaseEDRProvider):
         if not parameters:
             return True  # Let everything through
 
-        # Convert parameter filters into SQL Alchemy filters
-        filter_group = [
-            self.Results.parameterID == str(value) for value in parameters
-        ]
-        return or_(*filter_group)
+        return self.Results.parameterID.in_([str(v) for v in parameters])
 
     def _get_datetime_filter(self, datetime_: Optional[str]) -> Any:
         if datetime_ in (None, '../..'):
@@ -420,12 +478,13 @@ class RISEEDRProvider(BaseEDRProvider):
         return bbox_filter
 
     def _construct_parameter_query(
-        self, query: Any, parameter: str, location_id: str
+        self, query: Any, subquery: Any, parameter: str, location_id: str
     ):
         """
         Construct a query for a specific parameter and join to main query.
 
         :param query: The main SQLAlchemy query to join to.
+        :param subquery: The subquery to join with.
         :param parameter: The parameter ID to filter by.
         :param location_id: The location ID to filter by.
 
@@ -438,15 +497,20 @@ class RISEEDRProvider(BaseEDRProvider):
             )
             .filter(self.Results.locationID == location_id)
             .filter(self.Results.parameterID == parameter)
-            .join(self.Item, self.Item.itemID == self.Results.itemID)
-            .filter(self.Item.itemRecordStatusID == 1)
-            .filter(self.Item.isModeled == 0)
-            .subquery()
         )
-        model = aliased(self.Results, parameter_query)
+
+        if self.force_ignore_modeled:
+            parameter_query = parameter_query.filter(
+                exists()
+                .where(self.Results.itemID == self.Item.itemID)
+                .where(self.Item.itemRecordStatusID == 1)
+                .where(self.Item.isModeled == 0)
+            )
+
+        model = aliased(self.Results, parameter_query.subquery())
         parameter_column = model.result.label(parameter)
         return query.join(
-            model, self.Results.dateTime == model.dateTime
+            model, subquery.c.dateTime == model.dateTime
         ).add_columns(parameter_column)
 
     def _compile_and_execute(self, session, query):
@@ -482,7 +546,10 @@ class RISEFeatureProvider(GenericSQLProvider):
         driver_name = 'mysql+pymysql'
         extra_conn_args = {'charset': 'utf8mb4'}
         super().__init__(provider_def, driver_name, extra_conn_args)
-        self.where_clauses = provider_def.get('where_clauses', [])
+        self.where_clauses = provider_def.get(
+            'where_clauses',
+            {'locationStatusID': 1, 'locationTypeID': LOCATION_TYPE_IDS},
+        )
 
     def get_fields(self):
         """
@@ -622,7 +689,10 @@ class RISEFeatureProvider(GenericSQLProvider):
         if self.where_clauses:
             for col, val in self.where_clauses.items():
                 LOGGER.debug(f'Applying where clause: {col} = {val}')
-                properties.append([col, val])
+                if isinstance(val, list):
+                    properties.extend([col, str(v).strip()] for v in val)
+                else:
+                    properties.append([col, val])
 
         return super().query(
             offset=offset,
@@ -662,6 +732,25 @@ class RISEFeatureProvider(GenericSQLProvider):
             func.ST_GeomFromGeoJSON(geom_column),
         )
         return bbox_filter
+
+    def _get_property_filters(self, properties):
+        if not properties:
+            return True  # Let everything through
+
+        # Group values by column name
+        grouped = defaultdict(list)
+        for column_name, value in properties:
+            grouped[column_name].append(value)
+
+        or_groups = []
+
+        for column_name, values in grouped.items():
+            column = getattr(self.table_model, column_name)
+
+            or_groups.append(column.in_(values))
+
+        # OR across different columns
+        return and_(*or_groups)
 
 
 @functools.cache
