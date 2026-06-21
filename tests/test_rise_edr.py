@@ -7,7 +7,7 @@ from pygeoapi.provider.base import (
     ProviderItemNotFoundError,
     ProviderNoDataError,
 )
-from pgedr.sql.rise import RISEEDRProvider
+from pgedr.rise import RISEEDRProvider
 
 
 @pytest.fixture()
