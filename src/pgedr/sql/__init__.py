@@ -306,7 +306,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
 
         parameter_filters = self._get_parameter_filters(select_properties)
         select_parameters = set(
-            select_properties or self._get_parameters(set())
+            select_properties or self.get_parameters(set())
         )
         time_filter = self._get_datetime_filter(datetime_)
         filters = [self.lc == location_id, parameter_filters, time_filter]
@@ -359,7 +359,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         apply_domain_geometry(domain, geom)
         if t_len > 1:
             domain['domainType'] += 'Series'
-        coverage['parameters'] = self._get_parameters(parameter_names)
+        coverage['parameters'] = self.get_parameters(parameter_names)
         coverage['ranges'] = {
             k: ranges[k] for k in ranges if k in parameter_names
         }
@@ -408,7 +408,7 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
                 parameters.update(coverage.pop('parameters'))
                 coverage_collection['coverages'].append(coverage)
 
-        coverage_collection['parameters'] = self._get_parameters(parameters)
+        coverage_collection['parameters'] = self.get_parameters(parameters)
 
         return coverage_collection
 
@@ -458,40 +458,6 @@ class EDRProvider(BaseEDRProvider, GenericSQLProvider):  # pyright: ignore[repor
         # Convert parameter filters into SQL Alchemy filters
         filter_group = [self.pic == value for value in parameters]
         return or_(*filter_group)
-
-    def _get_parameters(self, parameters: set, aslist=False):
-        """
-        Generate parameters
-
-        :param parameters: The datastream data to generate parameters for.
-        :param aslist: The label for the parameter.
-
-        :returns: A dictionary containing the parameter definition.
-        """
-        if not parameters:
-            parameters = set(self.fields.keys())
-
-        out_params = {}
-        for param in set(parameters):
-            conf_ = self.fields[param]
-            out_params[param] = {
-                'id': param,
-                'type': 'Parameter',
-                'name': conf_['title'],
-                'observedProperty': {
-                    'id': param,
-                    'label': {'en': conf_['title']},
-                },
-                'unit': {
-                    'label': {'en': conf_['title']},
-                    'symbol': {
-                        'value': conf_['x-ogc-unit'],
-                        'type': 'http://www.opengis.net/def/uom/UCUM/',
-                    },
-                },
-            }
-
-        return list(out_params.values()) if aslist else out_params
 
     def _get_relationships(self):
         """

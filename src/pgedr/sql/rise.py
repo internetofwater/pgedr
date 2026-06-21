@@ -393,7 +393,7 @@ class RISEEDRProvider(BaseEDRProvider):
         Generate parameters
 
         :param parameters: The datastream data to generate parameters for.
-        :param aslist: The label for the parameter.
+        :param as_list: Whether to return a list of parameter definitions.
 
         :returns: A dictionary containing the parameter definition.
         """
