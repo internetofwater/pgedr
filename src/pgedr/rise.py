@@ -154,6 +154,7 @@ class RISEEDRProvider(BaseEDRProvider):
                     self.Parameter.parameterDescription,
                     self.ParameterUnit.parameterUnit,
                     self.ParameterUnit.parameterUnitName,
+                    self.ParameterUnit.parameterUnitDefinition,
                 ).join(self.ParameterUnit)
 
                 if self.active_status_id:
@@ -162,13 +163,14 @@ class RISEEDRProvider(BaseEDRProvider):
                 query = query.distinct()
 
                 result = self._compile_and_execute(session, query)
-                for pid, pname, pdesc, punit, punit_name in result:
+                for pid, pname, pdesc, punit, uname, udesc in result:
                     self._fields[str(pid)] = {
                         'type': 'number',
                         'title': pname,
                         'description': pdesc,
                         'x-ogc-unit': punit,
-                        'x-ogc-unit-name': punit_name,
+                        'x-ogc-unit-name': uname,
+                        'x-ogc-unit-definition': udesc,
                     }
 
         return self._fields
@@ -416,13 +418,20 @@ class RISEEDRProvider(BaseEDRProvider):
                     'label': {'en': conf_['title']},
                 },
                 'unit': {
-                    'label': {'en': conf_['x-ogc-unit-name']},
                     'symbol': {
                         'value': conf_['x-ogc-unit'],
                         'type': 'http://www.opengis.net/def/uom/UCUM/',
                     },
                 },
             }
+            if conf_.get('x-ogc-unit-name'):
+                out_params[param]['unit']['label'] = {
+                    'en': conf_['x-ogc-unit-name']
+                }
+            if conf_.get('x-ogc-unit-definition'):
+                out_params[param]['unit']['definition'] = {
+                    'en': conf_['x-ogc-unit-definition']
+                }
 
         if as_list:
             return list(out_params.values())
