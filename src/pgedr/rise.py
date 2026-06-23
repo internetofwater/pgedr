@@ -154,7 +154,6 @@ class RISEEDRProvider(BaseEDRProvider):
                     self.Parameter.parameterDescription,
                     self.ParameterUnit.parameterUnit,
                     self.ParameterUnit.parameterUnitName,
-                    self.ParameterUnit.parameterUnitDefinition,
                 ).join(self.ParameterUnit)
 
                 if self.active_status_id:
@@ -163,14 +162,13 @@ class RISEEDRProvider(BaseEDRProvider):
                 query = query.distinct()
 
                 result = self._compile_and_execute(session, query)
-                for pid, pname, pdesc, punit, uname, udesc in result:
+                for pid, pname, pdesc, punit, uname in result:
                     self._fields[str(pid)] = {
                         'type': 'number',
                         'title': pname,
                         'description': pdesc,
                         'x-ogc-unit': punit,
                         'x-ogc-unit-name': uname,
-                        'x-ogc-unit-definition': udesc,
                     }
 
         return self._fields
@@ -427,10 +425,6 @@ class RISEEDRProvider(BaseEDRProvider):
             if conf_.get('x-ogc-unit-name'):
                 out_params[param]['unit']['label'] = {
                     'en': conf_['x-ogc-unit-name']
-                }
-            if conf_.get('x-ogc-unit-definition'):
-                out_params[param]['unit']['definition'] = {
-                    'en': conf_['x-ogc-unit-definition']
                 }
 
         if as_list:
