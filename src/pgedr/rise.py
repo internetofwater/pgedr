@@ -153,6 +153,7 @@ class RISEEDRProvider(BaseEDRProvider):
                     self.Parameter.parameterName,
                     self.Parameter.parameterDescription,
                     self.ParameterUnit.parameterUnit,
+                    self.ParameterUnit.parameterUnitName,
                 ).join(self.ParameterUnit)
 
                 if self.active_status_id:
@@ -161,12 +162,13 @@ class RISEEDRProvider(BaseEDRProvider):
                 query = query.distinct()
 
                 result = self._compile_and_execute(session, query)
-                for pid, pname, pdesc, punit in result:
+                for pid, pname, pdesc, punit, uname in result:
                     self._fields[str(pid)] = {
                         'type': 'number',
                         'title': pname,
                         'description': pdesc,
                         'x-ogc-unit': punit,
+                        'x-ogc-unit-name': uname,
                     }
 
         return self._fields
@@ -377,7 +379,7 @@ class RISEEDRProvider(BaseEDRProvider):
             if len(t_values) > 1:
                 domain['domainType'] += 'Series'
 
-            coverage['parameters'] = self._get_parameters(parameter_names)
+            coverage['parameters'] = self.get_parameters(parameter_names)
             coverage['ranges'] = {
                 k: ranges[k] for k in ranges if k in parameter_names
             }
@@ -388,7 +390,9 @@ class RISEEDRProvider(BaseEDRProvider):
 
         return coverage
 
-    def _get_parameters(self, parameters: set, aslist=False):
+    def get_parameters(
+        self, parameters: set | list = [], as_list=False
+    ) -> dict | list:
         """
         Generate parameters
 
@@ -412,15 +416,21 @@ class RISEEDRProvider(BaseEDRProvider):
                     'label': {'en': conf_['title']},
                 },
                 'unit': {
-                    'label': {'en': conf_['title']},
                     'symbol': {
                         'value': conf_['x-ogc-unit'],
                         'type': 'http://www.opengis.net/def/uom/UCUM/',
                     },
                 },
             }
+            if conf_.get('x-ogc-unit-name'):
+                out_params[param]['unit']['label'] = {
+                    'en': conf_['x-ogc-unit-name']
+                }
 
-        return list(out_params.values()) if aslist else out_params
+        if as_list:
+            return list(out_params.values())
+        else:
+            return out_params
 
     def _get_parameter_filters(self, parameters: Optional[list]) -> Any:
         """
